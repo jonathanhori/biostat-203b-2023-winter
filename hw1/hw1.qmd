@@ -98,12 +98,12 @@ Each of these bash commands are similar to the analogous commands without the `z
 prefix, but are used on files compressed by gzip. We are able to use these commands on the
 compressed files without first decompressing them:
 - `zcat` displays the contents of a compressed file
-- `zless` displays the contents of a file as pages, allowing scrolling
-- `zmore` also paginates the contents of a file, only scrolling downward
-- `zgrep` allows searching of a compressed file and displays matching lines of the file
+- `zless` displays the contents of a file as pages, allowing scrolling  
+- `zmore` also paginates the contents of a file, only scrolling downward  
+- `zgrep` allows searching of a compressed file and displays matching lines of the file  
 
 ```{bash}
-zcat ~/mimic/core/admissions.csv.gz | head -5
+zcat ~/mimic/hosp/diagnoses_icd.csv.gz | head
 ```
 
 4.  What's the output of the following bash script?
