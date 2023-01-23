@@ -138,37 +138,51 @@ done
 
 ***ANSWER***
 ```{bash}
-datafile=~/mimic/core/admissions.csv.gz
-
 # First few lines:
-zcat $datafile | head
+zcat ~/mimic/core/admissions.csv.gz | head
 ```
 
 ```{bash}
 # Number of rows:
-zcat $datafile | awk 'END { print NR }'
+zcat ~/mimic/core/admissions.csv.gz | 
+  tail +2 | awk 'END { print NR }'
 ```
 
 ```{bash}
 # Unique patients:
-zcat $datafile | awk -F, '{print $1}' | sort | uniq -u | wc -l
+zcat ~/mimic/core/admissions.csv.gz | 
+  tail +2 | awk -F, '{print $1}' | sort | uniq -u | wc -l
 ```
-There are 523,741 rows in the admissions dataset. There are 171,081 unique patients
+There are 523,740 rows in the admissions dataset. There are 171,080 unique patients
 constituting these admissions.
 
 
 6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `insurance`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
 
 ```{bash}
-var_names=("admission_type" "admission_location" "insurance" "insurance")
-datafile=~/mimic/core/admissions.csv.gz
+# Admission type
+zcat ~/mimic/core/admissions.csv.gz| 
+  tail +2 | awk -F, '{print $6}' | sort | uniq -c
+```
 
-for name in var_names
-do
-  echo #####
-  echo $name
-  zcat $datafile | awk '{print $}
-  
+
+```{bash}
+# Admission location
+zcat ~/mimic/core/admissions.csv.gz | 
+  tail +2 | awk -F, '{print $7}' | sort | uniq -c
+```
+Note there are 60,435 rows with a missing admission location.
+
+```{bash}
+# Insurance
+zcat ~/mimic/core/admissions.csv.gz | 
+  tail +2 | awk -F, '{print $9}' | sort | uniq -c
+```
+
+```{bash}
+# Ethnicity
+zcat ~/mimic/core/admissions.csv.gz | 
+  tail +2 | awk -F, '{print $12}' | sort | uniq -c
 ```
 
 
@@ -228,3 +242,62 @@ Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this sh
 ## Q5. More fun with Linux
 
 Try following commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
+
+***ANSWER***
+Print a calendar of the current month.
+```{bash}
+cal
+```
+Print a calendar of the year 2021.
+```{bash}
+cal 2021
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
+```{bash}
+
+```
+
