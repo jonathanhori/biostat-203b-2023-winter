@@ -96,7 +96,7 @@ The `icu` module contains patient-level data sourced specifically from the ICU.
 
 Each of these bash commands are similar to the analogous commands without the `z-` 
 prefix, but are used on files compressed by gzip. We are able to use these commands on the
-compressed files without first decompressing them:
+compressed files without first decompressing them:  
 - `zcat` displays the contents of a compressed file
 - `zless` displays the contents of a file as pages, allowing scrolling  
 - `zmore` also paginates the contents of a file, only scrolling downward  
@@ -105,27 +105,72 @@ compressed files without first decompressing them:
 ```{bash}
 zcat ~/mimic/hosp/diagnoses_icd.csv.gz | head
 ```
+```{bash} 
+zgrep V0251 ~/mimic/hosp/diagnoses_icd.csv.gz | head # diagnoses having code V0251
+```
 
 4.  What's the output of the following bash script?
 
 ```{bash}
-#| eval: false
+#| eval: true
 for datafile in ~/mimic/core/*.gz
 do
   ls -l $datafile
 done
 ```
+
 ***ANSWER***
 
 The above bash script lists all the gzip-compressed files in the core module of 
 the mimic data. 
 
-
 Display the number of lines in each data file using a similar loop.
+
+```{bash}
+for datafile in ~/mimic/core/*.gz
+do
+  basename $datafile 
+  zcat $datafile | awk 'END { print NR }'
+done
+```
 
 5.  Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and so on.)
 
-6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
+***ANSWER***
+```{bash}
+datafile=~/mimic/core/admissions.csv.gz
+
+# First few lines:
+zcat $datafile | head
+```
+
+```{bash}
+# Number of rows:
+zcat $datafile | awk 'END { print NR }'
+```
+
+```{bash}
+# Unique patients:
+zcat $datafile | awk -F, '{print $1}' | sort | uniq -u | wc -l
+```
+There are 523,741 rows in the admissions dataset. There are 171,081 unique patients
+constituting these admissions.
+
+
+6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `insurance`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
+
+```{bash}
+var_names=("admission_type" "admission_location" "insurance" "insurance")
+datafile=~/mimic/core/admissions.csv.gz
+
+for name in var_names
+do
+  echo #####
+  echo $name
+  zcat $datafile | awk '{print $}
+  
+```
+
 
 ## Q4. Who's popular in Price and Prejudice
 
