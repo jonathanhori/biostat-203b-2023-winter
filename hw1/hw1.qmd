@@ -18,6 +18,8 @@ knitr:
     fig.width: 6
     fig.height: 4
     message: FALSE
+execute:
+  echo: false
 ---
 
 Display machine information for reproducibility:
@@ -129,6 +131,8 @@ the mimic data.
 Display the number of lines in each data file using a similar loop.
 
 ```{bash}
+#| eval: false
+
 # Core module
 for datafile in ~/mimic/core/*.gz
 do
@@ -138,7 +142,9 @@ done
 ```
 
 ```{bash}
-# Hops module
+#| eval: false
+
+# Hospital module
 for datafile in ~/mimic/hosp/*.gz
 do
   echo $datafile
@@ -147,6 +153,8 @@ done
 ```
 
 ```{bash}
+#| eval: false
+
 # ICU module
 for datafile in ~/mimic/icu/*.gz
 do
@@ -324,7 +332,7 @@ hostname
 ```
 
 
-Output the architecture of my device. It seems this computer is running AArch64.
+Output the architecture of my device. It seems this machine is running AArch64.
 ```{bash}
 arch
 ```
@@ -334,9 +342,9 @@ Output all the system information for my device. Using the `-a` option returns:
 1) OS name  
 2) network node  
 3) OS release number  
-4) system name
-5) OS version
-6) system hardware information
+4) system name  
+5) OS version  
+6) system hardware information  
 
 ```{bash}
 uname -a
@@ -351,36 +359,51 @@ uptime
 
 Output which user is making these commands among logged in users
 ```{bash}
-who am i
+#who am i # No output in docker container.
+whoami # Works in Ubuntu
 ```
 
 
 Output all currently logged in users.
 ```{bash}
-who
+who # No output in docker container
 ```
 
 Output all logged in users with the current process they are running.
 ```{bash}
-w
+w # No users returned in docker container
 ```
 
+
+Output the user and group names and uids for the current user. 
 ```{bash}
 id
 ```
 
+
+Display all the users who have logged in (or out) of the system.
+
 ```{bash}
-last | head
+last | head 
 ```
 
+
+Display all the permutations of the strings enclosed by the brackets. Strings 
+are concatenated in the order of the brackets.
 ```{bash}
 echo {con,pre}{sent,fer}{s,ed}
 ```
 
+The `time` command executes the subsequent command given, and reports the real-, 
+user- and system CPU time to execute this command. Here, we use it with the 
+`sleep` command, which delays further shell execution for the given number of 
+seconds. So the real-time output of slightly over 5 seconds makes sense.
 ```{bash}
 time sleep 5
 ```
 
+Return the last commands entered. Nothing is returned here.
 ```{bash}
-history | tail
+history | tail # No output
 ```
+
