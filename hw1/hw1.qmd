@@ -72,7 +72,8 @@ Use Bash commands to answer following questions.
 
 ***ANSWER*** 
 
-These files are distributed as `.csv.gz` files instead of `.csv` files because of their size - the `.csv.gz` files are `.csv` files compressed using gzip.
+These files are distributed as `.csv.gz` files instead of `.csv` files because 
+of their size - the `.csv.gz` files are `.csv` files compressed using gzip.
 
 ```{bash}
 ls -l ~/mimic/core/
@@ -169,8 +170,7 @@ done
 zcat ~/mimic/core/admissions.csv.gz | head
 ```
 
-We observe that the admissions data has a header, which we remove in the below
-calculations.
+We observe that the admissions data has a header, which we remove in the below calculations.
 
 ```{bash}
 # Number of rows:
@@ -190,7 +190,8 @@ constituting these admissions.
 6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `insurance`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
 
 ***ANSWER***  
-
+The unique values for each variable with the counts of their appearances are 
+below.
 ```{bash}
 # Admission type
 zcat ~/mimic/core/admissions.csv.gz| 
@@ -231,10 +232,10 @@ Explain what `wget -nc` does. Do **not** put this text file `pg42671.txt` in Git
 
 ***ANSWER***  
 Running `wget -nc` retrieves and saves the file found at the url provided. Adding
-the `-nc` command prevents the file from being redownloaded if already present.
+the `-nc` command prevents the file from being re-downloaded if already present.
 
 ```{bash}
-#| eval: false
+#| eval: true
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
 for char in Elizabeth Jane Lydia Darcy
 do
@@ -280,7 +281,8 @@ Using `chmod` to make the file executable by the owner, and run
 ./middle.sh pg42671.txt 20 5
 ```
 
-Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
+Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this 
+shell script. Why do we need the first line of the shell script?
 
 ***ANSWER***  
 In the above bash script, the `$1`, `$2`, and `$3` variables are referencing the
@@ -288,7 +290,8 @@ first, second, and third arguments to our script, respectively. Our script first
 considers the head of the file provided by the first argument, up to the line 
 number given by the second argument (20 in our case). Then it looks at the tail 
 of this output, up to the number of lines given by the third argument. So the 
-output we see above are lines 15 through 20 in the Pride and Prejudice .txt file.
+output we see above are lines 15 through 20 in the Pride and Prejudice `.txt` 
+file.
 
 We need the first line of the shell script to indicate what interpreter we would
 like to execute our script with.
@@ -362,12 +365,15 @@ whoami # Works in Ubuntu
 ```
 
 
-Output all currently logged in users.
+Output all currently logged in users. Nothing outputs when running this command 
+in the Docker container provided. A suspicion for this is because of the 
+permissions avilable to the `rstuidio` user.
 ```{bash}
 who # No output in docker container
 ```
 
-Output all logged in users with the current process they are running.
+Output all logged in users with the current process they are running. Again,
+nothing outputs in the course Docker container.
 ```{bash}
 w # No users returned in docker container
 ```
@@ -400,7 +406,9 @@ seconds. So the real-time output of slightly over 5 seconds makes sense.
 time sleep 5
 ```
 
-Return the last commands entered. Nothing is returned here.
+Return the last commands entered. Nothing is returned here. A possible reason 
+for this is the way Quarto executes code chunks, and the `history` command might
+not have access to the history from all code chunks together.
 ```{bash}
 history | tail # No output
 ```
