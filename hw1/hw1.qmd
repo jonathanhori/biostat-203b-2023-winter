@@ -18,8 +18,6 @@ knitr:
     fig.width: 6
     fig.height: 4
     message: FALSE
-execute:
-  echo: false
 ---
 
 Display machine information for reproducibility:
