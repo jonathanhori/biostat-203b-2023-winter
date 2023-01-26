@@ -129,9 +129,28 @@ the mimic data.
 Display the number of lines in each data file using a similar loop.
 
 ```{bash}
+# Core module
 for datafile in ~/mimic/core/*.gz
 do
-  basename $datafile 
+  echo $datafile
+  zcat $datafile | awk 'END { print NR }'
+done
+```
+
+```{bash}
+# Hops module
+for datafile in ~/mimic/hosp/*.gz
+do
+  echo $datafile
+  zcat $datafile | awk 'END { print NR }'
+done
+```
+
+```{bash}
+# ICU module
+for datafile in ~/mimic/icu/*.gz
+do
+  echo $datafile
   zcat $datafile | awk 'END { print NR }'
 done
 ```
@@ -274,60 +293,94 @@ like to execute our script with.
 Try following commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
 
 ***ANSWER***  
+
 Print a calendar of the current month.
 ```{bash}
 cal
 ```
+
 Print a calendar of the year 2021.
 ```{bash}
 cal 2021
 ```
 
+Print the monthly calendar for September 1752. It seems 12 dates are missing,
+and that the cause is the adoption of the [Gregorian calendar by the British 
+empire](https://en.wikipedia.org/wiki/Adoption_of_the_Gregorian_calendar).
 ```{bash}
+cal 9 1752
+```
 
+Print the current date and time.
+
+```{bash}
+date
+```
+
+
+Print the hostname of my device.
+```{bash}
+hostname
+```
+
+
+Output the architecture of my device. It seems this computer is running AArch64.
+```{bash}
+arch
+```
+
+
+Output all the system information for my device. Using the `-a` option returns:
+1) OS name  
+2) network node  
+3) OS release number  
+4) system name
+5) OS version
+6) system hardware information
+
+```{bash}
+uname -a
+```
+
+
+Display how long the current system has been running. 
+```{bash}
+uptime
+```
+
+
+Output which user is making these commands among logged in users
+```{bash}
+who am i
+```
+
+
+Output all currently logged in users.
+```{bash}
+who
+```
+
+Output all logged in users with the current process they are running.
+```{bash}
+w
 ```
 
 ```{bash}
-
+id
 ```
 
 ```{bash}
-
+last | head
 ```
 
 ```{bash}
-
+echo {con,pre}{sent,fer}{s,ed}
 ```
 
 ```{bash}
-
+time sleep 5
 ```
 
 ```{bash}
-
+history | tail
 ```
-
-```{bash}
-
-```
-
-```{bash}
-
-```
-
-```{bash}
-
-```
-
-```{bash}
-
-```
-
-```{bash}
-
-```
-
-```{bash}
-
-```
-
