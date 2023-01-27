@@ -130,7 +130,7 @@ the mimic data.
 Display the number of lines in each data file using a similar loop.
 
 ```{bash}
-#| eval: false
+#| eval: true
 
 # Core module
 for datafile in ~/mimic/core/*.gz
@@ -141,7 +141,7 @@ done
 ```
 
 ```{bash}
-#| eval: false
+#| eval: true
 
 # Hospital module
 for datafile in ~/mimic/hosp/*.gz
@@ -152,7 +152,7 @@ done
 ```
 
 ```{bash}
-#| eval: false
+#| eval: true
 
 # ICU module
 for datafile in ~/mimic/icu/*.gz
@@ -181,10 +181,11 @@ zcat ~/mimic/core/admissions.csv.gz |
 ```{bash}
 # Unique patients:
 zcat ~/mimic/core/admissions.csv.gz | 
-  tail +2 | awk -F, '{print $1}' | sort | uniq -u | wc -l
+  tail +2 | awk -F, '{print $1}' | sort | uniq | wc -l
 ```
-There are 523,740 rows in the admissions dataset. There are 171,080 unique patients
-constituting these admissions.
+There are 523,740 rows of data in the admissions dataset (523,741 rows when 
+including the header). There are 256,878 unique patients constituting these 
+admissions.
 
 
 6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `insurance`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
@@ -290,7 +291,7 @@ first, second, and third arguments to our script, respectively. Our script first
 considers the head of the file provided by the first argument, up to the line 
 number given by the second argument (20 in our case). Then it looks at the tail 
 of this output, up to the number of lines given by the third argument. So the 
-output we see above are lines 15 through 20 in the Pride and Prejudice `.txt` 
+output we see above are lines 16 through 20 in the Pride and Prejudice `.txt` 
 file.
 
 We need the first line of the shell script to indicate what interpreter we would
@@ -339,7 +340,7 @@ arch
 ```
 
 
-Output all the system information for my device. Using the `-a` option returns:
+Output all the system information for my device. Using the `-a` option returns:  
 1) OS name  
 2) network node  
 3) OS release number  

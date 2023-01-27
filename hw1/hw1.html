@@ -680,10 +680,11 @@ zcat ~/mimic/core/admissions.csv.gz |
 <pre><code>## 523740</code></pre>
 <pre class="bash"><code># Unique patients:
 zcat ~/mimic/core/admissions.csv.gz | 
-  tail +2 | awk -F, &#39;{print $1}&#39; | sort | uniq -u | wc -l</code></pre>
-<pre><code>## 171080</code></pre>
-<p>There are 523,740 rows in the admissions dataset. There are 171,080
-unique patients constituting these admissions.</p>
+  tail +2 | awk -F, &#39;{print $1}&#39; | sort | uniq | wc -l</code></pre>
+<pre><code>## 256878</code></pre>
+<p>There are 523,740 rows of data in the admissions dataset (523,741
+rows when including the header). There are 256,878 unique patients
+constituting these admissions.</p>
 <ol start="6" style="list-style-type: decimal">
 <li>What are the possible values taken by each of the variable
 <code>admission_type</code>, <code>admission_location</code>,
@@ -893,7 +894,7 @@ calendar by the British empire</a>.</p>
 ## </code></pre>
 <p>Print the current date and time.</p>
 <pre class="bash"><code>date</code></pre>
-<pre><code>## Thu 26 Jan 2023 08:36:08 PM UTC</code></pre>
+<pre><code>## Thu 26 Jan 2023 09:39:01 PM UTC</code></pre>
 <p>Print the hostname of my device.</p>
 <pre class="bash"><code>hostname</code></pre>
 <pre><code>## 1a9e4c355dd4</code></pre>
@@ -902,7 +903,8 @@ running AArch64.</p>
 <pre class="bash"><code>arch</code></pre>
 <pre><code>## aarch64</code></pre>
 <p>Output all the system information for my device. Using the
-<code>-a</code> option returns: 1) OS name<br />
+<code>-a</code> option returns:<br />
+1) OS name<br />
 2) network node<br />
 3) OS release number<br />
 4) system name<br />
@@ -912,7 +914,7 @@ running AArch64.</p>
 <pre><code>## Linux 1a9e4c355dd4 5.15.49-linuxkit #1 SMP PREEMPT Tue Sep 13 07:51:32 UTC 2022 aarch64 aarch64 aarch64 GNU/Linux</code></pre>
 <p>Display how long the current system has been running.</p>
 <pre class="bash"><code>uptime</code></pre>
-<pre><code>##  20:36:08 up 3 days,  7:33,  0 users,  load average: 1.93, 1.62, 1.10</code></pre>
+<pre><code>##  21:39:01 up 3 days,  8:35,  0 users,  load average: 1.47, 1.45, 0.97</code></pre>
 <p>Output which user is making these commands among logged in users</p>
 <pre class="bash"><code>#who am i # No output in docker container.
 whoami # Works in Ubuntu</code></pre>
@@ -925,7 +927,7 @@ user.</p>
 <p>Output all logged in users with the current process they are running.
 Again, nothing outputs in the course Docker container.</p>
 <pre class="bash"><code>w # No users returned in docker container</code></pre>
-<pre><code>##  20:36:08 up 3 days,  7:33,  0 users,  load average: 1.93, 1.62, 1.10
+<pre><code>##  21:39:01 up 3 days,  8:35,  0 users,  load average: 1.47, 1.45, 0.97
 ## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT</code></pre>
 <p>Output the user and group names and uids for the current user.</p>
 <pre class="bash"><code>id</code></pre>
@@ -945,9 +947,9 @@ delays further shell execution for the given number of seconds. So the
 real-time output of slightly over 5 seconds makes sense.</p>
 <pre class="bash"><code>time sleep 5</code></pre>
 <pre><code>## 
-## real 0m5.006s
+## real 0m5.004s
 ## user 0m0.001s
-## sys  0m0.004s</code></pre>
+## sys  0m0.003s</code></pre>
 <p>Return the last commands entered. Nothing is returned here. A
 possible reason for this is the way Quarto executes code chunks, and the
 <code>history</code> command might not have access to the history from
