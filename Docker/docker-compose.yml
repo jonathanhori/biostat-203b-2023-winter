@@ -10,7 +10,6 @@ services:
       DISABLE_AUTH: true
       SSH_AUTH_SOCK: /ssh-agent
     volumes:
-      - "/Users/jonathanhori/203b-lecture:/home/rstudio/203b-lecture"
       - "/Users/jonathanhori/mimic:/home/rstudio/mimic"
       - "/Users/jonathanhori/203b-hw:/home/rstudio/203b-hw"
       - "~/.ssh:/home/rstudio/.ssh"
