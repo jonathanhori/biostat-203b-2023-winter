@@ -235,13 +235,18 @@ Explain what `wget -nc` does. Do **not** put this text file `pg42671.txt` in Git
 Running `wget -nc` retrieves and saves the file found at the url provided. Adding
 the `-nc` command prevents the file from being re-downloaded if already present.
 
+Note that the author of the book is Jane Austen, and her name might appear
+in the "Jane" word count. If her name only appears in the beginning of the file,
+we can remove this in a manner similar to removing the header in the problem 
+above. So the book really begins on line 60.
+
 ```{bash}
 #| eval: true
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
 for char in Elizabeth Jane Lydia Darcy
 do
   echo $char:
-  grep -o $char pg42671.txt | wc -l
+  cat pg42671.txt | tail +60 | grep -o $char  | wc -l
 done
 ```
 
@@ -275,7 +280,15 @@ is appended to the end of the file.
 head -n "$2" "$1" | tail -n "$3"
 ```
 
-Using `chmod` to make the file executable by the owner, and run
+Using `chmod` to make the file executable by the owner, and run.
+
+```{bash eval=FALSE}
+# Create file, copy above code
+vi middle.sh
+
+# Make executable after creating file
+chmod u+x middle.sh
+```
 
 ```{bash}
 #| eval: true
@@ -368,17 +381,37 @@ whoami # Works in Ubuntu
 
 Output all currently logged in users. Nothing outputs when running this command 
 in the Docker container provided. A suspicion for this is because of the 
-permissions avilable to the `rstuidio` user.
+[permissions available](https://unix.stackexchange.com/questions/506757/different-outputs-for-w-who-whoami-and-id) 
+to the `rstudio` user (one would expect `rstudio` to
+output otherwise). But the output running this on my local machine is also below, 
+for illustration purposes.
 ```{bash}
 who # No output in docker container
 ```
 
+```
+# Output on local machine
+jonathanhori console  Jan 21 20:17 
+jonathanhori ttys000  Jan 26 10:59 
+jonathanhori ttys001  Jan 27 12:52 
+```
+
+
 Output all logged in users with the current process they are running. Again,
-nothing outputs in the course Docker container.
+nothing outputs in the course Docker container, but my local output is below for 
+illustration.
 ```{bash}
 w # No users returned in docker container
 ```
 
+```
+# Output on local machine
+12:57  up 5 days, 16:41, 3 users, load averages: 3.06 3.70 3.30
+USER     TTY      FROM              LOGIN@  IDLE WHAT
+jonathanhori console  -                Sat20   5days -
+jonathanhori s000     -                Thu10       7 /Users/jonathanhori/.docker/cli-plugins/docker-com
+jonathanhori s001     -                12:52       - w
+```
 
 Output the user and group names and uids for the current user. 
 ```{bash}
@@ -386,10 +419,26 @@ id
 ```
 
 
-Display all the users who have logged in (or out) of the system.
+Display all the recent users who have logged in (or out) of the system. Once again, 
+there is no output here in the Docker container, but my local machine's output
+is also below.
 
 ```{bash}
 last | head 
+```
+
+```
+# Output on local machine
+jonathanhori  ttys001                   Fri Jan 27 12:52   still logged in
+jonathanhori  ttys001                   Thu Jan 26 12:38 - 12:38  (00:00)
+jonathanhori  ttys000                   Thu Jan 26 10:59   still logged in
+jonathanhori  ttys001                   Wed Jan 25 19:22 - 19:22  (00:00)
+jonathanhori  ttys000                   Wed Jan 25 19:19 - 19:19  (00:00)
+jonathanhori  ttys000                   Wed Jan 25 19:16 - 19:16  (00:00)
+jonathanhori  ttys001                   Wed Jan 25 15:45 - 15:45  (00:00)
+jonathanhori  ttys000                   Wed Jan 25 15:32 - 15:32  (00:00)
+jonathanhori  ttys002                   Tue Jan 24 20:32 - 20:32  (00:00)
+jonathanhori  ttys002                   Tue Jan 24 18:12 - 18:12  (00:00)
 ```
 
 
@@ -409,8 +458,22 @@ time sleep 5
 
 Return the last commands entered. Nothing is returned here. A possible reason 
 for this is the way Quarto executes code chunks, and the `history` command might
-not have access to the history from all code chunks together.
+not have access to the history from all code chunks together. But for
+illustration, the output from my local machine's terminal is also below.
 ```{bash}
-history | tail # No output
+history | tail # No output in Quarto
 ```
 
+```
+# Output on local machine
+  496  who
+  497  softwareupdate --install-rosetta
+  498  ls -all
+  499  man uniq
+  500  w
+  501  who
+  502  id
+  503  groups
+  504  w
+  505  history | tail
+```
