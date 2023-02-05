@@ -57,7 +57,7 @@ Which function is fastest? Is there difference in the (default) parsed data type
 
 For later questions, we stick to the `read_csv` in tidyverse.
 
-****ANSWER****
+***ANSWER***
 ```{r}
 admissions_filename <- str_c(mimic_path, "/core/admissions.csv.gz")
 
@@ -112,7 +112,7 @@ system(
 )
 ```
 
-1. Import `icustatys.csv.gz` as a tibble `icustays_tble`. 
+1. Import `icustays.csv.gz` as a tibble `icustays_tble`. 
 
 2. How many unique `subject_id`? Can a `subject_id` have multiple ICU stays? 
 
@@ -120,7 +120,60 @@ system(
 
 4. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
 
-****ANSWER****
+***ANSWER***
+```{r}
+icustays_filename <- str_c(mimic_path, "/icu/icustays.csv.gz")
+
+icustays_tble <- read_csv(icustays_filename)
+
+icustays_tble %>%
+  distinct(subject_id) %>% 
+  count
+```
+
+
+```{r}
+# Saving grouped data to reuse for multiple ggplots
+grouped_stays <- icustays_tble %>% 
+  group_by(subject_id) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+grouped_stays %>% head
+
+# Histogram of stays per patient
+grouped_stays %>% 
+  ggplot() +
+    geom_bar(mapping = aes(x = count)) +
+    labs(
+      title = "Distribution of ICU stays per patient_id is positively skewed",
+      x = "Stay count",
+      y = "Patient count"
+    )
+
+# # Histogram of stays per patients having multiple stays
+# grouped_stays %>% 
+#   filter(count > 5) %>% 
+#   ggplot() +
+#     geom_bar(mapping = aes(x = count))
+```
+
+We observe that there are 53,150 unique patients in the ICU stays data. Patients
+may appear more than once, with the patients having the most ICU stays appearing
+over 30 times in the data. The distribution of ICU stay counts is highly 
+positively skewed, with most patients only having one or a couple admissions.
+
+```{r}
+# Selecting only first ICU stay
+first_icustays_tble <- icustays_tble %>% 
+  group_by(subject_id) %>% 
+  arrange(intime, .by_group=TRUE) %>% 
+  slice(1)
+
+first_icustays_tble
+```
+
+
 
 ## Q3. `admission` data
 
