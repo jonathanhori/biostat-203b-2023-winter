@@ -144,11 +144,11 @@ grouped_stays %>% head
 # Histogram of stays per patient
 grouped_stays %>% 
   ggplot() +
-    geom_bar(mapping = aes(x = count)) +
-    labs(
-      title = "Distribution of ICU stays per patient_id is positively skewed",
-      x = "Stay count",
-      y = "Patient count"
+  geom_bar(mapping = aes(x = count)) +
+  labs(
+    title = "Distribution of ICU stays per patient_id is positively skewed",
+    x = "Stay count",
+    y = "Patient count"
     )
 
 # # Histogram of stays per patients having multiple stays
@@ -203,6 +203,117 @@ system(
     - admission minute (anything unusual?)  
     - length of hospital stay (anything unusual?)    
     
+    
+***ANSWER***
+```{r}
+admissions_filename <- str_c(mimic_path, "/core/admissions.csv.gz")
+
+admissions_tble <- read_csv(admissions_filename)
+admissions_tble
+```
+Let's ensure we are considering patients in the icustays_tble.
+```{r}
+admissions_tble <- semi_join(admissions_tble, icustays_tble,
+                             by = c("subject_id", "hadm_id"))
+```
+
+Now we process our date data on the smaller table.
+```{r}
+admissions_tble <- admissions_tble %>% 
+  mutate(admit_year = year(admittime),
+         admit_month = month(admittime, label=TRUE),
+         admit_mday = mday(admittime),
+         admit_wday = wday(admittime, label=TRUE),
+         admit_hour = hour(admittime),
+         admit_minute = minute(admittime),
+         length_of_stay = as.duration(dischtime - admittime) / 3600
+         )
+```
+
+```{r}
+# Admit year
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_year)) +
+  labs(
+    title = "Count of admissions by year",
+    x = "Admit year",
+    y = "Count"
+  )
+```
+   
+```{r}
+# Admit month
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_month)) +
+  labs(
+    title = "Count of admissions by month",
+    x = "Admit month",
+    y = "Count"
+  )
+```
+
+```{r}
+# Admit day of month
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_mday)) +
+  labs(
+    title = "Count of admissions by day of the month",
+    x = "Day of month of admission",
+    y = "Count"
+  )
+```
+
+```{r}
+# Admit weekday
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_wday)) +
+  labs(
+    title = "Count of admissions by weekday",
+    x = "Admit day",
+    y = "Count"
+  )
+```
+
+```{r}
+# Admit hour
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_hour)) +
+  labs(
+    title = "Count of admissions by hour",
+    x = "Admit hour",
+    y = "Count"
+  )
+```
+
+```{r}
+# Admit minute
+admissions_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = admit_minute)) +
+  labs(
+    title = "Count of admissions by minute",
+    x = "Admit minute",
+    y = "Count"
+  )
+```
+
+```{r}
+# Admit minute
+admissions_tble %>% 
+  ggplot() +
+  geom_histogram(mapping = aes(x = length_of_stay), bins = 50) +
+  labs(
+    title = "Count of admissions by length of stay",
+    x = "Length of stay",
+    y = "Count"
+  )
+```
+
 ## Q4. `patients` data
 
 Patient information is available in `patients.csv.gz`. See <https://mimic.mit.edu/docs/iv/modules/hosp/patients/> for details of each field in this file. The first 10 lines are
