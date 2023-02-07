@@ -332,6 +332,24 @@ system(
 
 2. Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
 
+***ANSWER***
+```{r}
+patients_filename <- str_c(mimic_path, "/core/patients.csv.gz")
+patients_tble <- read_csv(patients_filename)
+
+patients_tble <- semi_join(patients_tble, icustays_tble,
+                           on = "subject_id")
+patients_tble
+```
+
+```{r}
+patients_tble %>% summarise(
+  mean_age = mean(anchor_age)
+)
+
+```
+
+
 ## Q5. Lab results
 
 `labevents.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/hosp/labevents/>) contains all laboratory measurements for patients. The first 10 lines are
