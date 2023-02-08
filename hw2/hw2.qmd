@@ -464,7 +464,7 @@ system(
 Omitting the header, there are 122,103,667 rows in the `labevents` data. 
 
 ```{r}
-cols_to_keep <- c(
+labevents_cols_to_keep <- c(
   "subject_id",
   "hadm_id",
   "itemid",
@@ -472,7 +472,8 @@ cols_to_keep <- c(
   "valuenum" # Lab value cast as numeric
 )
 
-labevents_tble <- read_csv(labevents_filename, col_select = cols_to_keep)
+labevents_tble <- read_csv(labevents_filename, 
+                           col_select = labevents_cols_to_keep)
 ```
 
 ```{r}
@@ -480,7 +481,7 @@ labevents_tble <- read_csv(labevents_filename, col_select = cols_to_keep)
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
                             by = c("subject_id", "hadm_id"))
 
-itemid_to_keep <- c(
+lab_itemid_to_keep <- c(
   50912,
   50971,
   50983,
@@ -492,7 +493,7 @@ itemid_to_keep <- c(
 )
 
 labevents_tble <- labevents_tble %>% 
-  slice(match(itemid, itemid_to_keep))
+  slice(match(itemid, lab_itemid_to_keep))
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
@@ -533,6 +534,25 @@ system(
 2. Further restrict `chartevents_tble` to the first vital measurement during the ICU stay. 
 
 3. Summarize these vital measurements by appropriate numerics and graphics. 
+
+***ANSWER***
+```{r}
+chartevents_cols_to_keep <- c(
+  "subject_id",
+  "hadm_id",
+  "charttime",
+  "itemid",
+  "valuenum"
+)
+
+chart_itemid_to_keep <- c(
+  220045,
+  220181,
+  220179,
+  223761,
+  220210
+)
+```
 
 ## Q7. Putting things together
 
