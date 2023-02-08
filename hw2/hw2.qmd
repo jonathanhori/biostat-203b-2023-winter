@@ -226,9 +226,11 @@ admissions_tble <- admissions_tble %>%
          admit_wday = wday(admittime, label=TRUE),
          admit_hour = hour(admittime),
          admit_minute = minute(admittime),
-         length_of_stay = as.duration(dischtime - admittime) / 3600
+         length_of_stay = as.duration(dischtime - admittime)
          )
+admissions_tble
 ```
+
 
 ```{r}
 # Admit year
@@ -241,7 +243,8 @@ admissions_tble %>%
     y = "Count"
   )
 ```
-   
+We see that admissions by month are roughly the same per month, with slighly 
+fewer admissions in February.
 ```{r}
 # Admit month
 admissions_tble %>% 
@@ -253,7 +256,9 @@ admissions_tble %>%
     y = "Count"
   )
 ```
-
+Admissions by day of the month are also roughly constant over time, with a drop
+on the 31st of the month. Since not every month has 31 days, it seems likely 
+this is just an artifact of this source of bias.
 ```{r}
 # Admit day of month
 admissions_tble %>% 
@@ -265,7 +270,7 @@ admissions_tble %>%
     y = "Count"
   )
 ```
-
+Admissions by weekday are also roughly constant.
 ```{r}
 # Admit weekday
 admissions_tble %>% 
@@ -277,6 +282,15 @@ admissions_tble %>%
     y = "Count"
   )
 ```
+The number of admissions by hour varies widely over the course of a day. The 
+mode occurs at hour 0, midnight. One suspects this is because of missing 
+admission times defaulting to midnight on the date, rather than this 
+representing a true trend in admissions. We also observe a clear increase in 
+admissions in the afternoon, rising from roughly 10am until 6pm, when admissions
+begin to decline slightly. It's unusual that there are more admissions at 7am 
+than at other close times in the morning. One hypothesis for this (which we do 
+not assess here) could be that some hospitals only open at 7am, and that 
+patients arriving before then are recorded as being admitted at 7am.
 
 ```{r}
 # Admit hour
@@ -290,6 +304,11 @@ admissions_tble %>%
   )
 ```
 
+The number of admissions per minute are roughly constant, with large exceptions
+occurring at 0, 15, 30, and 45 minutes. This makes sense, as it is likely that
+the admission time was entered after rounding to the nearest quarter of an hour
+for simplicity at the hospital.
+
 ```{r}
 # Admit minute
 admissions_tble %>% 
@@ -302,16 +321,22 @@ admissions_tble %>%
   )
 ```
 
+The below data is measured in hours. The length of stay distribution is highly 
+positively skewed. It may be unusual that so many lengths are so long, as some
+of the highest values have durations of years.
+
 ```{r}
-# Admit minute
+# Length of stay
 admissions_tble %>% 
   ggplot() +
-  geom_histogram(mapping = aes(x = length_of_stay), bins = 50) +
+  geom_freqpoly(mapping = aes(x = length_of_stay), binwidth = 3600) +
   labs(
     title = "Count of admissions by length of stay",
     x = "Length of stay",
     y = "Count"
   )
+
+# admissions_tble %>% select(length_of_stay) %>% arrange(desc(length_of_stay))
 ```
 
 ## Q4. `patients` data
@@ -342,12 +367,48 @@ patients_tble <- semi_join(patients_tble, icustays_tble,
 patients_tble
 ```
 
+Summarizing anchor age:
 ```{r}
 patients_tble %>% summarise(
-  mean_age = mean(anchor_age)
+  mean_age = mean(anchor_age),
+  sd_age = sd(anchor_age),
+  min_age = min(anchor_age),
+  max_age = max(anchor_age),
+  n_missing = sum(is.na(anchor_age)),
+  range = max_age - min_age
 )
 
+patients_tble %>% 
+  ggplot() + 
+  geom_histogram(mapping = aes(x = anchor_age), bins = 73) # range of ages is 73
+
 ```
+We see above that the youngest patient in our dataset is 18, and the oldest is 
+91. From the histogram of ages, we can see that the number of patients increases
+as age increases, with this trend reversing around age 65. After this age, the 
+number of patients begins to decrease. 
+
+Now summarizing gender:
+```{r}
+patients_tble %>% 
+  group_by(gender) %>% 
+  summarise(count = n(), 
+            n_missing = sum(is.na(gender)))
+
+
+patients_tble %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = anchor_age, fill=gender), position = "dodge") +
+  labs(
+    title = "Anchor Age distributions by gender"
+  )
+```
+
+We observe that there are more males than females in this dataset, with 29,797 
+males and 23,353 females. The shapes of age distributions per gender look 
+roughly similar. Interestingly, the number of patients per age begins to decline 
+for men after peaking around age 65, whereas the number of patients per age 
+remains roughly constant as women get older, only declining at higher ages.
 
 
 ## Q5. Lab results
