@@ -121,6 +121,7 @@ system(
 4. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
 
 ***ANSWER***
+### 1-2.
 ```{r}
 icustays_filename <- str_c(mimic_path, "/icu/icustays.csv.gz")
 
@@ -131,7 +132,7 @@ icustays_tble %>%
   count
 ```
 
-
+### 3. 
 ```{r}
 # Saving grouped data to reuse for multiple ggplots
 grouped_stays <- icustays_tble %>% 
@@ -163,14 +164,15 @@ may appear more than once, with the patients having the most ICU stays appearing
 over 30 times in the data. The distribution of ICU stay counts is highly 
 positively skewed, with most patients only having one or a couple admissions.
 
+### 4. 
 ```{r}
 # Selecting only first ICU stay
-first_icustays_tble <- icustays_tble %>% 
+icustays_tble <- icustays_tble %>% 
   group_by(subject_id) %>% 
   arrange(intime, .by_group=TRUE) %>% 
   slice(1)
 
-first_icustays_tble
+icustays_tble
 ```
 
 
@@ -205,18 +207,22 @@ system(
     
     
 ***ANSWER***
+### 1. 
 ```{r}
 admissions_filename <- str_c(mimic_path, "/core/admissions.csv.gz")
 
 admissions_tble <- read_csv(admissions_filename)
 admissions_tble
 ```
+
+### 2. 
 Let's ensure we are considering patients in the icustays_tble.
 ```{r}
 admissions_tble <- semi_join(admissions_tble, icustays_tble,
                              by = c("subject_id", "hadm_id"))
 ```
 
+### 3. 
 Now we process our date data on the smaller table.
 ```{r}
 admissions_tble <- admissions_tble %>% 
@@ -358,6 +364,7 @@ system(
 2. Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
 
 ***ANSWER***
+### 1.
 ```{r}
 patients_filename <- str_c(mimic_path, "/core/patients.csv.gz")
 patients_tble <- read_csv(patients_filename)
@@ -367,6 +374,7 @@ patients_tble <- semi_join(patients_tble, icustays_tble,
 patients_tble
 ```
 
+### 2. 
 Summarizing anchor age:
 ```{r}
 patients_tble %>% summarise(
@@ -382,11 +390,22 @@ patients_tble %>%
   ggplot() + 
   geom_histogram(mapping = aes(x = anchor_age), bins = 73) # range of ages is 73
 
+
+patients_tble %>% 
+  group_by(anchor_age) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(anchor_age)) %>% 
+  head
+
 ```
 We see above that the youngest patient in our dataset is 18, and the oldest is 
 91. From the histogram of ages, we can see that the number of patients increases
 as age increases, with this trend reversing around age 65. After this age, the 
 number of patients begins to decrease. 
+
+We see that there is a jump in `anchor_age`s from 89 to 91, with more patients 
+having an age of 91 than any other value. This is due to the coding of 
+`anchor_age` to 91 for any patient [whose age is actually over 89.](https://mimic.mit.edu/docs/iv/modules/hosp/patients/#anchor_age-anchor_year-anchor_year_group)
 
 Now summarizing gender:
 ```{r}
@@ -448,7 +467,8 @@ system(
 
 
 ***ANSWER***
-```{r}
+### 1.
+```{r, eval=FALSE}
 
 labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
 
@@ -463,7 +483,8 @@ system(
 ```
 Omitting the header, there are 122,103,667 rows in the `labevents` data. 
 
-```{r}
+### 2.
+```{r, eval = FALSE}
 labevents_cols_to_keep <- c(
   "subject_id",
   "hadm_id",
@@ -476,10 +497,10 @@ labevents_tble <- read_csv(labevents_filename,
                            col_select = labevents_cols_to_keep)
 ```
 
-```{r}
+```{r, eval = FALSE}
 # Filter lab events: first for patients, then for lab types
-labevents_tble <- semi_join(labevents_tble, icustays_tble,
-                            by = c("subject_id", "hadm_id"))
+# labevents_tble <- semi_join(labevents_tble, icustays_tble,
+#                             by = c("subject_id", "hadm_id"))
 
 lab_itemid_to_keep <- c(
   50912,
@@ -492,15 +513,23 @@ lab_itemid_to_keep <- c(
   50931
 )
 
-labevents_tble <- labevents_tble %>% 
+labevents_tble <- labevents_tble %>%
   slice(match(itemid, lab_itemid_to_keep))
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
 
-```{r}
+### 3. 
+```{r, eval=FALSE}
 # determine start of icu stay per patient, slice first lab of each type 
 #   occurring after admission
+
+labevents_join_logic <- join_by(subject_id,
+                                hadm_id,
+                                between(charttime, intime, outtime))
+
+labevents_tble <- semi_join(labevents_tble, icustays_tble,
+                            by = join_logic)
 ```
 
 
