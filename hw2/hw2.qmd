@@ -170,9 +170,9 @@ positively skewed, with most patients only having one or a couple admissions.
 icustays_tble <- icustays_tble %>% 
   group_by(subject_id) %>% 
   arrange(intime, .by_group=TRUE) %>% 
-  slice(1)
+  slice(1) %>% 
+  print(width = Inf)
 
-icustays_tble
 ```
 
 
@@ -232,9 +232,11 @@ admissions_tble <- admissions_tble %>%
          admit_mday = mday(admittime),
          admit_wday = lubridate::wday(admittime, label=TRUE),
          admit_hour = hour(admittime),
-         admit_minute = minute(admittime),
-         length_of_stay = as.duration(dischtime - admittime)
+         admit_minute = minute(admittime)
+         # length_of_stay = as.duration(dischtime - admittime)
          ) %>% 
+  left_join(select(icustays_tble, subject_id, hadm_id, los),
+            by = c("subject_id", "hadm_id")) %>% 
   print(width = Inf)
 ```
 
@@ -329,14 +331,13 @@ admissions_tble %>%
 ```
 
 The below data is measured in hours. The length of stay distribution is highly 
-positively skewed. It may be unusual that so many lengths are so long, as some
-of the highest values have durations of years.
+positively skewed.
 
 ```{r}
 # Length of stay
 admissions_tble %>% 
   ggplot() +
-  geom_freqpoly(mapping = aes(x = length_of_stay), binwidth = 3600) +
+  geom_histogram(mapping = aes(x = los), bins=50) +
   labs(
     title = "Count of admissions by length of stay",
     x = "Length of stay",
@@ -470,8 +471,8 @@ system(
 ### ANSWER
 #### 1.
 ```{r}
-# labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
-labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
+labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
+# labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
 ```
 
 ```{r, eval=FALSE}
@@ -490,7 +491,6 @@ Omitting the header, there are 122,103,667 rows in the `labevents` data.
 ```{r, eval = FALSE}
 labevents_cols_to_keep <- c(
   "subject_id",
-  # "hadm_id",
   "itemid",
   "charttime",  # The time the measurement was charted/acquired
   "valuenum" # Lab value cast as numeric
@@ -500,12 +500,18 @@ system.time(
                              col_select = labevents_cols_to_keep) %>% 
     print(width = Inf)
 )
+
+labevents_tble %>% distinct(subject_id) %>% nrow()
 ```
 
 ```{r, eval = FALSE}
 # Filter lab events: first for patients, then for lab types
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
-                            by = c("subject_id")) #, "hadm_id"))
+                            by = c("subject_id"))
+# 
+# semi_join(labevents_tble, icustays_tble,
+#                             by = c("subject_id")) %>% 
+#   distinct(subject_id) %>% nrow()
 
 lab_itemid_to_keep <- c(
   50912,
@@ -520,9 +526,18 @@ lab_itemid_to_keep <- c(
 
 system.time(
   labevents_tble <- labevents_tble %>%
-    slice(match(itemid, lab_itemid_to_keep)) %>% 
+    filter(itemid %in% lab_itemid_to_keep) %>% 
+    # slice(match(itemid, lab_itemid_to_keep)) %>%
     print(width = Inf)
 )
+
+# labevents_tble %>%
+#     filter(itemid %in% lab_itemid_to_keep) %>% 
+#     # slice(match(itemid, lab_itemid_to_keep)) %>% 
+#     distinct(subject_id) %>% nrow()
+# #     print(width = Inf)
+# 
+# labevents_tble %>% distinct(subject_id) %>% nrow()
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
@@ -534,13 +549,22 @@ After filtering for the right patients and lab types, we have 6,788,195 rows.
 
 # left join icustays by subject id, filter charttime between in/outitme
 
-
-# labevents_join_logic <- join_by(subject_id,
-#                                 # hadm_id,
-#                                 between(charttime, intime, outtime))
-# 
-# labevents_tble <- semi_join(labevents_tble, icustays_tble,
-#                             by = join_logic)
+labevents_tble %>% 
+  # First join with icu stays and filter for intime and outtime of that stay
+  left_join(select(icustays_tble, subject_id, intime, outtime),
+            by = "subject_id") %>% 
+  filter((charttime >= intime) & (charttime <= outtime)) %>%
+  # distinct(subject_id) %>% nrow()
+  # print(width = Inf)
+  # Next select the first lab measurement of each type
+  group_by(subject_id, itemid) %>%
+  arrange(charttime, .by_group = TRUE) %>%
+  slice(1) %>%
+  # print(width = Inf)
+  # Finally pivot wider to get lab measurements as their own variables
+  select(-charttime, -intime, -outtime) %>%
+  pivot_wider(names_from = itemid, values_from = valuenum) %>%
+  print(width = Inf)
 
 ```
 
