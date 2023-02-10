@@ -120,8 +120,8 @@ system(
 
 4. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
 
-***ANSWER***
-### 1-2.
+### ANSWER
+#### 1-2.
 ```{r}
 icustays_filename <- str_c(mimic_path, "/icu/icustays.csv.gz")
 
@@ -132,7 +132,7 @@ icustays_tble %>%
   count
 ```
 
-### 3. 
+#### 3. 
 ```{r}
 # Saving grouped data to reuse for multiple ggplots
 grouped_stays <- icustays_tble %>% 
@@ -153,8 +153,8 @@ grouped_stays %>%
     )
 
 # # Histogram of stays per patients having multiple stays
-# grouped_stays %>% 
-#   filter(count > 5) %>% 
+# grouped_stays %>%
+#   filter(count > 5) %>%
 #   ggplot() +
 #     geom_bar(mapping = aes(x = count))
 ```
@@ -164,7 +164,7 @@ may appear more than once, with the patients having the most ICU stays appearing
 over 30 times in the data. The distribution of ICU stay counts is highly 
 positively skewed, with most patients only having one or a couple admissions.
 
-### 4. 
+#### 4. 
 ```{r}
 # Selecting only first ICU stay
 icustays_tble <- icustays_tble %>% 
@@ -206,8 +206,8 @@ system(
     - length of hospital stay (anything unusual?)    
     
     
-***ANSWER***
-### 1. 
+### ANSWER
+#### 1. 
 ```{r}
 admissions_filename <- str_c(mimic_path, "/core/admissions.csv.gz")
 
@@ -215,26 +215,27 @@ admissions_tble <- read_csv(admissions_filename)
 admissions_tble
 ```
 
-### 2. 
+#### 2. 
 Let's ensure we are considering patients in the icustays_tble.
 ```{r}
 admissions_tble <- semi_join(admissions_tble, icustays_tble,
-                             by = c("subject_id", "hadm_id"))
+                             by = c("subject_id", "hadm_id")) %>% 
+  print(width = Inf)
 ```
 
-### 3. 
+#### 3. 
 Now we process our date data on the smaller table.
 ```{r}
 admissions_tble <- admissions_tble %>% 
   mutate(admit_year = year(admittime),
-         admit_month = month(admittime, label=TRUE),
+         admit_month = lubridate::month(admittime, label=TRUE),
          admit_mday = mday(admittime),
-         admit_wday = wday(admittime, label=TRUE),
+         admit_wday = lubridate::wday(admittime, label=TRUE),
          admit_hour = hour(admittime),
          admit_minute = minute(admittime),
          length_of_stay = as.duration(dischtime - admittime)
-         )
-admissions_tble
+         ) %>% 
+  print(width = Inf)
 ```
 
 
@@ -363,8 +364,8 @@ system(
 
 2. Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
 
-***ANSWER***
-### 1.
+### ANSWER
+#### 1.
 ```{r}
 patients_filename <- str_c(mimic_path, "/core/patients.csv.gz")
 patients_tble <- read_csv(patients_filename)
@@ -374,7 +375,7 @@ patients_tble <- semi_join(patients_tble, icustays_tble,
 patients_tble
 ```
 
-### 2. 
+#### 2. 
 Summarizing anchor age:
 ```{r}
 patients_tble %>% summarise(
@@ -466,12 +467,14 @@ system(
 4. Summarize the lab measurements by appropriate numerics and graphics. 
 
 
-***ANSWER***
-### 1.
+### ANSWER
+#### 1.
+```{r}
+# labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
+labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
+```
+
 ```{r, eval=FALSE}
-
-labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
-
 system(
   str_c(
     "zcat < ", 
@@ -483,24 +486,26 @@ system(
 ```
 Omitting the header, there are 122,103,667 rows in the `labevents` data. 
 
-### 2.
+#### 2.
 ```{r, eval = FALSE}
 labevents_cols_to_keep <- c(
   "subject_id",
-  "hadm_id",
+  # "hadm_id",
   "itemid",
   "charttime",  # The time the measurement was charted/acquired
   "valuenum" # Lab value cast as numeric
 )
-
-labevents_tble <- read_csv(labevents_filename, 
-                           col_select = labevents_cols_to_keep)
+system.time(
+  labevents_tble <- read_csv(labevents_filename, 
+                             col_select = labevents_cols_to_keep) %>% 
+    print(width = Inf)
+)
 ```
 
 ```{r, eval = FALSE}
 # Filter lab events: first for patients, then for lab types
-# labevents_tble <- semi_join(labevents_tble, icustays_tble,
-#                             by = c("subject_id", "hadm_id"))
+labevents_tble <- semi_join(labevents_tble, icustays_tble,
+                            by = c("subject_id")) #, "hadm_id"))
 
 lab_itemid_to_keep <- c(
   50912,
@@ -513,25 +518,37 @@ lab_itemid_to_keep <- c(
   50931
 )
 
-labevents_tble <- labevents_tble %>%
-  slice(match(itemid, lab_itemid_to_keep))
+system.time(
+  labevents_tble <- labevents_tble %>%
+    slice(match(itemid, lab_itemid_to_keep)) %>% 
+    print(width = Inf)
+)
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
 
-### 3. 
+#### 3. 
 ```{r, eval=FALSE}
 # determine start of icu stay per patient, slice first lab of each type 
 #   occurring after admission
 
-labevents_join_logic <- join_by(subject_id,
-                                hadm_id,
-                                between(charttime, intime, outtime))
+# left join icustays by subject id, filter charttime between in/outitme
 
-labevents_tble <- semi_join(labevents_tble, icustays_tble,
-                            by = join_logic)
+
+# labevents_join_logic <- join_by(subject_id,
+#                                 # hadm_id,
+#                                 between(charttime, intime, outtime))
+# 
+# labevents_tble <- semi_join(labevents_tble, icustays_tble,
+#                             by = join_logic)
+
 ```
 
+
+#### 4.
+```{r}
+# left join icustays by subject id, filter charttime between in/outitme
+```
 
 ## Q6. Vitals from charted events
 
@@ -564,7 +581,7 @@ system(
 
 3. Summarize these vital measurements by appropriate numerics and graphics. 
 
-***ANSWER***
+### ANSWER
 ```{r}
 chartevents_cols_to_keep <- c(
   "subject_id",
