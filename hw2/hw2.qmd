@@ -510,10 +510,9 @@ labitems_dict <- read_csv(str_c(mimic_path, "/hosp/d_labitems.csv.gz")) %>%
 ```{r}
 # Filter lab events: first for patients, then for lab types
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
-                            # by = c("subject_id"))
                             by = "subject_id")
 
-labevents_tble %>% distinct(subject_id) %>% nrow()
+# labevents_tble %>% distinct(subject_id) %>% nrow()
 
 lab_itemid_to_keep <- c(
   50912,
@@ -535,7 +534,7 @@ labevents_tble <- labevents_tble %>%
 labitems_dict <- labitems_dict %>% 
   filter(itemid %in% lab_itemid_to_keep)
 
-labevents_tble %>% distinct(subject_id) %>% nrow()
+# labevents_tble %>% distinct(subject_id) %>% nrow()
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
@@ -632,10 +631,16 @@ system(
 We follow a similar approach as in Question 5.
 
 #### 1.
+Let's set up the tables and vectors we need for processing:
 ```{r}
+
+# chartevents_filename <- str_c(mimic_path, "/icu/chartevents.csv.gz")
+chartevents_filename <- str_c(mimic_path, "/icu/chartevents_filtered_itemid.csv.gz")
+
+chartevents_itemid_dict_filename <- str_c(mimic_path, "/icu/d_items.csv.gz")
+
 chartevents_cols_to_keep <- c(
   "subject_id",
-  "hadm_id",
   "charttime",
   "itemid",
   "valuenum"
@@ -648,12 +653,92 @@ chart_itemid_to_keep <- c(
   223761,
   220210
 )
+
+chartevents_tble <- read_csv(chartevents_filename,
+                             col_select = chartevents_cols_to_keep) %>% 
+  print(width = Inf)
+chartevents_dict <- read_csv(chartevents_itemid_dict_filename) %>% 
+  print(width = Inf)
+```
+
+Now we filter both tables for 1) the correct subject_ids, and 2) the correct
+itemids.
+
+```{r}
+
+chartevents_tble <- semi_join(chartevents_tble, icustays_tble,
+                              by = "subject_id") %>% 
+  filter(itemid %in% chart_itemid_to_keep) 
+
+chartevents_tble %>% distinct(subject_id) %>% nrow()
+
+chartevents_dict <- chartevents_dict %>% 
+  filter(itemid %in% chart_itemid_to_keep)
+
 ```
 
 
 #### 2.
+Now we can filter our chart events for events occurring within our ICU stays, 
+and slice the first events:
+
+```{r}
+chartevents_tble <- chartevents_tble %>% 
+  # Filter for intime and outtime
+  left_join(select(icustays_tble, subject_id, intime, outtime),
+            by = "subject_id") %>% 
+  filter((charttime >= intime) & (charttime <= outtime)) %>% 
+  
+  # Slice first events per type
+  group_by(subject_id, itemid) %>% 
+  arrange(charttime, .by_group = TRUE) %>% 
+  slice(1) %>% 
+  
+  # Pivot wider to make data tidy
+  select(-charttime, -intime, -outtime) %>% 
+  pivot_wider(names_from = itemid, values_from = valuenum) %>% 
+  ungroup() %>% 
+  
+  # Rename columns using dict
+  rename_at(
+    vars(as.character(chartevents_dict$itemid)),
+    ~str_to_lower(
+      str_replace_all(chartevents_dict$label, " ", "_")
+    )
+  ) %>% 
+  print(width = Inf)
+  
+```
 
 #### 3.
+We produce similar distribution plots and summary statistics as in Question 5.
+Note the below code is not as DRY as it could be (calling `pivot_longer` twice,
+for example), but to avoid requiring another package (`magrittr`), 
+we avoid using the Tee pipe `%T>%`, which would facilitate calling `ggplot` and 
+`summarise` in the same pipe.
+
+```{r}
+# Histograms
+chartevents_tble %>% 
+  pivot_longer(!subject_id, names_to = "chart_item", values_to = "values") %>% 
+  ggplot(aes(values)) +
+  facet_wrap(~chart_item, scales = "free") +
+  geom_histogram()
+
+# Summary statistics
+chartevents_tble %>% 
+  pivot_longer(!subject_id, names_to = "chart_item", values_to = "values") %>% 
+  group_by(chart_item) %>% 
+  summarise(count = sum(!is.na(values)),
+            num_missing = sum(is.na(values)),
+            avg = mean(values, na.rm = TRUE),
+            min = min(values, na.rm = TRUE),
+            max = max(values, na.rm = TRUE),
+            std_dev = sd(values, na.rm = TRUE))
+
+
+```
+
 
 ## Q7. Putting things together
 
