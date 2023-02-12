@@ -475,7 +475,7 @@ system(
 labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
 ```
 
-```{r, eval=FALSE}
+```{r}
 system(
   str_c(
     "zcat < ", 
@@ -488,7 +488,7 @@ system(
 Omitting the header, there are 122,103,667 rows in the `labevents` data. 
 
 #### 2.
-```{r, eval = FALSE}
+```{r}
 labevents_cols_to_keep <- c(
   "subject_id",
   "itemid",
@@ -507,7 +507,7 @@ labitems_dict <- read_csv(str_c(mimic_path, "/hosp/d_labitems.csv.gz")) %>%
   print(width = Inf)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Filter lab events: first for patients, then for lab types
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
                             # by = c("subject_id"))
@@ -541,7 +541,7 @@ labevents_tble %>% distinct(subject_id) %>% nrow()
 After filtering for the right patients and lab types, we have 6,788,195 rows.
 
 #### 3. 
-```{r, eval=FALSE}
+```{r}
 labevents_tble <- labevents_tble %>% 
   # First join with icu stays and filter for intime and outtime of that stay
   left_join(select(icustays_tble, subject_id, intime, outtime),
@@ -563,10 +563,10 @@ labevents_tble <- labevents_tble %>%
 labevents_tble <- labevents_tble %>%
   rename_at(
     vars(as.character(labitems_dict$itemid)),
-            ~str_to_lower(
-              str_replace_all(labitems_dict$label, " ", "_")
-            )
-    ) %>% 
+    ~str_to_lower(
+      str_replace_all(labitems_dict$label, " ", "_")
+    )
+  ) %>% 
   print(width = Inf)
 
 # 51892 ?
@@ -577,14 +577,24 @@ labevents_tble <- labevents_tble %>%
 #### 4.
 ```{r}
 labevents_tble %>% 
-  select(-subject_id) %>%
-  gather() %>% 
-  ggplot(aes(value)) +
-  facet_wrap(~key, scales = "free") +
+  pivot_longer(!subject_id, names_to = "lab_item", values_to = "values") %>% 
+  ggplot(aes(values)) +
+  facet_wrap(~lab_item, scales = "free") +
   geom_histogram()
 ```
 
+```{r}
+labevents_tble %>% 
+  pivot_longer(!subject_id, names_to = "lab_item", values_to = "values") %>% 
+  group_by(lab_item) %>% 
+  summarise(count = sum(!is.na(values)),
+            num_missing = sum(is.na(values)),
+            avg = mean(values, na.rm = TRUE),
+            min = min(values, na.rm = TRUE),
+            max = max(values, na.rm = TRUE),
+            std_dev = sd(values, na.rm = TRUE))
 
+```
 
 
 ## Q6. Vitals from charted events
@@ -619,6 +629,9 @@ system(
 3. Summarize these vital measurements by appropriate numerics and graphics. 
 
 ### ANSWER
+We follow a similar approach as in Question 5.
+
+#### 1.
 ```{r}
 chartevents_cols_to_keep <- c(
   "subject_id",
@@ -636,6 +649,11 @@ chart_itemid_to_keep <- c(
   220210
 )
 ```
+
+
+#### 2.
+
+#### 3.
 
 ## Q7. Putting things together
 
