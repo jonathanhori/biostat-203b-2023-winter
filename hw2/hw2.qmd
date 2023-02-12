@@ -751,6 +751,23 @@ Let us create a tibble `mimic_icu_cohort` for all ICU stays, where rows are the 
 - first vital measurements during ICU stay
 - an indicator variable `thirty_day_mort` whether the patient died within 30 days of hospital admission (30 day mortality)
 
+### ANSWER
+
+```{r}
+# todo drop repeated los variable
+
+mimic_icu_cohort <- icustays_tble %>% 
+  left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>% 
+  left_join(patients_tble, by = "subject_id") %>% 
+  left_join(labevents_tble, by = "subject_id") %>% 
+  left_join(chartevents_tble, by = "subject_id") %>% 
+  mutate(
+    thirty_day_mort = as.integer(
+      (deathtime <= intime + days(30))
+    )) %>% 
+  print(width = Inf)
+```
+
 ## Q8. Exploratory data analysis (EDA)
 
 Summarize following information using appropriate numerics or graphs.
