@@ -471,8 +471,8 @@ system(
 ### ANSWER
 #### 1.
 ```{r}
-labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
-# labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
+# labevents_filename <- str_c(mimic_path, "/hosp/labevents.csv.gz")
+labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
 ```
 
 ```{r, eval=FALSE}
@@ -501,17 +501,19 @@ system.time(
     print(width = Inf)
 )
 
-labevents_tble %>% distinct(subject_id) %>% nrow()
+# Also import dict for renaming id columns
+labitems_dict <- read_csv(str_c(mimic_path, "/hosp/d_labitems.csv.gz")) %>%
+  select(itemid, label) %>%
+  print(width = Inf)
 ```
 
 ```{r, eval = FALSE}
 # Filter lab events: first for patients, then for lab types
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
-                            by = c("subject_id"))
-# 
-# semi_join(labevents_tble, icustays_tble,
-#                             by = c("subject_id")) %>% 
-#   distinct(subject_id) %>% nrow()
+                            # by = c("subject_id"))
+                            by = "subject_id")
+
+labevents_tble %>% distinct(subject_id) %>% nrow()
 
 lab_itemid_to_keep <- c(
   50912,
@@ -524,55 +526,66 @@ lab_itemid_to_keep <- c(
   50931
 )
 
-system.time(
-  labevents_tble <- labevents_tble %>%
-    filter(itemid %in% lab_itemid_to_keep) %>% 
-    # slice(match(itemid, lab_itemid_to_keep)) %>%
-    print(width = Inf)
-)
+# Filter labevents
+labevents_tble <- labevents_tble %>%
+  filter(itemid %in% lab_itemid_to_keep) %>% 
+  print(width = Inf)
 
-# labevents_tble %>%
-#     filter(itemid %in% lab_itemid_to_keep) %>% 
-#     # slice(match(itemid, lab_itemid_to_keep)) %>% 
-#     distinct(subject_id) %>% nrow()
-# #     print(width = Inf)
-# 
-# labevents_tble %>% distinct(subject_id) %>% nrow()
+# Filter dictionary
+labitems_dict <- labitems_dict %>% 
+  filter(itemid %in% lab_itemid_to_keep)
+
+labevents_tble %>% distinct(subject_id) %>% nrow()
 ```
 
 After filtering for the right patients and lab types, we have 6,788,195 rows.
 
 #### 3. 
 ```{r, eval=FALSE}
-# determine start of icu stay per patient, slice first lab of each type 
-#   occurring after admission
-
-# left join icustays by subject id, filter charttime between in/outitme
-
-labevents_tble %>% 
+labevents_tble <- labevents_tble %>% 
   # First join with icu stays and filter for intime and outtime of that stay
   left_join(select(icustays_tble, subject_id, intime, outtime),
             by = "subject_id") %>% 
   filter((charttime >= intime) & (charttime <= outtime)) %>%
-  # distinct(subject_id) %>% nrow()
-  # print(width = Inf)
+  
   # Next select the first lab measurement of each type
   group_by(subject_id, itemid) %>%
   arrange(charttime, .by_group = TRUE) %>%
   slice(1) %>%
-  # print(width = Inf)
+  
   # Finally pivot wider to get lab measurements as their own variables
   select(-charttime, -intime, -outtime) %>%
-  pivot_wider(names_from = itemid, values_from = valuenum) %>%
+  pivot_wider(names_from = itemid, values_from = valuenum) %>% 
+  ungroup()
+
+
+# Process column names for readability, using dictionary provided
+labevents_tble <- labevents_tble %>%
+  rename_at(
+    vars(as.character(labitems_dict$itemid)),
+            ~str_to_lower(
+              str_replace_all(labitems_dict$label, " ", "_")
+            )
+    ) %>% 
   print(width = Inf)
+
+# 51892 ?
 
 ```
 
 
 #### 4.
 ```{r}
-# left join icustays by subject id, filter charttime between in/outitme
+labevents_tble %>% 
+  select(-subject_id) %>%
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~key, scales = "free") +
+  geom_histogram()
 ```
+
+
+
 
 ## Q6. Vitals from charted events
 
