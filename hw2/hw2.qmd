@@ -763,8 +763,9 @@ mimic_icu_cohort <- icustays_tble %>%
   left_join(chartevents_tble, by = "subject_id") %>% 
   mutate(
     thirty_day_mort = as.integer(
-      (deathtime <= intime + days(30))
+      (deathtime <= intime + days(30)) %>% replace(is.na(.), FALSE)
     )) %>% 
+  ungroup() %>% 
   print(width = Inf)
 ```
 
@@ -779,4 +780,57 @@ Summarize following information using appropriate numerics or graphs.
 - `thirty_day_mort` vs first vital measurements
 
 - `thirty_day_mort` vs first ICU unit
+
+
+### ANSWER ###
+
+Thirty day mortality vs. Demographics
+```{r}
+demographic_colnames <- c(
+  "ethnicity",
+  "language",
+  "insurance",
+  "marital_status",
+  "gender"
+  # ,
+  # "anchor_age"
+)
+mimic_icu_cohort %>% 
+  select(demographic_colnames, thirty_day_mort) %>% #, subject_id) %>%
+  pivot_longer(demographic_colnames,
+             names_to = "demographic_variable",
+             values_to = "category") %>% 
+  group_by(demographic_variable, category) %>% 
+  summarise(avg_mortality = mean(thirty_day_mort),
+            count_died = sum(thirty_day_mort)) %>% 
+  print(n = Inf)
+  
+```
+
+
+Thirty day mortality vs. First lab measurements
+```{r}
+
+lab_colnames <- list(str_to_lower(
+      str_replace_all(labitems_dict$label, " ", "_")
+    ))
+lab_colnames
+```
+
+Thirty day mortality vs. First vital measurements
+```{r}
+vital_colnames <- list(str_to_lower(
+      str_replace_all(chartevents_dict$label, " ", "_")
+    ))
+vital_colnames
+```
+
+
+```{r}
+# Mortality vs. first ICU unit
+mimic_icu_cohort %>% 
+  group_by(first_careunit) %>% 
+  summarise(avg_mortality = mean(thirty_day_mort),
+            count_died = sum(thirty_day_mort))
+```
 
