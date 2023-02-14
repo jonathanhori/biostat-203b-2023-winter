@@ -15,8 +15,8 @@ knitr:
     cache: false    
     echo: true
     fig.align: 'center'
-    fig.width: 6
-    fig.height: 4
+    # fig.width: 10
+    # fig.height: 6
     message: FALSE
 ---
 
@@ -57,7 +57,7 @@ Which function is fastest? Is there difference in the (default) parsed data type
 
 For later questions, we stick to the `read_csv` in tidyverse.
 
-***ANSWER***
+### ANSWER
 ```{r}
 admissions_filename <- str_c(mimic_path, "/core/admissions.csv.gz")
 
@@ -152,11 +152,11 @@ grouped_stays %>%
     y = "Patient count"
     )
 
-# # Histogram of stays per patients having multiple stays
-# grouped_stays %>%
-#   filter(count > 5) %>%
-#   ggplot() +
-#     geom_bar(mapping = aes(x = count))
+# Histogram of stays per patients having multiple stays
+grouped_stays %>%
+  filter(count > 5) %>%
+  ggplot() +
+    geom_bar(mapping = aes(x = count))
 ```
 
 We observe that there are 53,150 unique patients in the ICU stays data. Patients
@@ -388,9 +388,15 @@ patients_tble %>% summarise(
   range = max_age - min_age
 )
 
+# num bins is the age range
 patients_tble %>% 
   ggplot() + 
-  geom_histogram(mapping = aes(x = anchor_age), bins = 73) # range of ages is 73
+  geom_histogram(mapping = aes(x = anchor_age), bins = 73) +
+  labs(
+    title = "Age distribution rises into middle age and declines after 65 years",
+    x = "Age",
+    y = "Count"
+  )
 
 
 patients_tble %>% 
@@ -421,7 +427,9 @@ patients_tble %>%
   ggplot() +
   geom_bar(mapping = aes(x = anchor_age, fill=gender), position = "dodge") +
   labs(
-    title = "Anchor Age distributions by gender"
+    title = "Age distributions for men peaks while female distribution plateaus",
+    x = "Age",
+    y = "Count"
   )
 ```
 
@@ -579,7 +587,11 @@ labevents_tble %>%
   pivot_longer(!subject_id, names_to = "lab_item", values_to = "values") %>% 
   ggplot(aes(values)) +
   facet_wrap(~lab_item, scales = "free") +
-  geom_histogram()
+  geom_histogram() +
+  labs(
+    x = "Measurement",
+    y = "Count"
+  )
 ```
 
 ```{r}
@@ -723,7 +735,11 @@ chartevents_tble %>%
   pivot_longer(!subject_id, names_to = "chart_item", values_to = "values") %>% 
   ggplot(aes(values)) +
   facet_wrap(~chart_item, scales = "free") +
-  geom_histogram()
+  geom_histogram() +
+  labs(
+    x = "Measurement value",
+    y = "Count"
+  )
 
 # Summary statistics
 chartevents_tble %>% 
@@ -859,7 +875,7 @@ mimic_icu_cohort %>%
   pivot_longer(lab_colnames, names_to = "lab_type", values_to = "reading") %>% 
   group_by(lab_type, thirty_day_mort) %>% 
   ggplot(mapping = aes(x = factor(thirty_day_mort), y = reading)) +
-  facet_wrap(~lab_type, scales = "free", ncol = 2) +
+  facet_wrap(~lab_type, scales = "free", space = "free_y", ncol = 2) +
   geom_boxplot() +
   labs(
     title = "Lab reading distributions by 30-day mortality status",
@@ -899,7 +915,7 @@ mimic_icu_cohort %>%
   group_by(vital_type, thirty_day_mort) %>%
   ggplot(mapping = aes(x = factor(thirty_day_mort), y = reading)) +
   facet_wrap(~vital_type, scales = "free", ncol = 2) +
-  geom_boxplot() +
+  geom_violin() +
   labs(
     title = "Vital reading distributions by 30-day mortality status",
     x = "30-day Mortality",
