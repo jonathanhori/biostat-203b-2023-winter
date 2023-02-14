@@ -782,18 +782,17 @@ Summarize following information using appropriate numerics or graphs.
 - `thirty_day_mort` vs first ICU unit
 
 
-### ANSWER ###
+### ANSWER
 
-Thirty day mortality vs. Demographics
+#### Thirty day mortality vs. Demographics
 ```{r}
+# First we consider non-numeric demographics
 demographic_colnames <- c(
   "ethnicity",
   "language",
   "insurance",
   "marital_status",
   "gender"
-  # ,
-  # "anchor_age"
 )
 mimic_icu_cohort %>% 
   select(demographic_colnames, thirty_day_mort) %>% #, subject_id) %>%
@@ -803,34 +802,129 @@ mimic_icu_cohort %>%
   group_by(demographic_variable, category) %>% 
   summarise(avg_mortality = mean(thirty_day_mort),
             count_died = sum(thirty_day_mort)) %>% 
-  print(n = Inf)
+  print(n = Inf) %>% 
   
+  # Plot by demographic variable
+  ungroup() %>% 
+  group_by(demographic_variable) %>% 
+  ggplot(mapping = aes(x = category, y = avg_mortality)) +
+  facet_wrap(~demographic_variable, scales = "free", ncol = 2) +
+  geom_col() +
+  coord_flip() + 
+  labs(
+    title = "Thirty day mortality rates by demographic category",
+    x = "Thirty day mortality rate",
+    y = "Demographic variable"
+  )
+```
+
+```{r}
+# Now we can look at anchor_age
+
+mimic_icu_cohort %>% 
+  group_by(anchor_age) %>% 
+  summarise(avg_mortality = mean(thirty_day_mort)) %>% 
+  ggplot(mapping = aes(x = anchor_age, y = avg_mortality)) +
+  geom_line() +
+  labs(
+    title = "Thirty day mortality rates increase along with age",
+    x = "Age",
+    y = "Thirty day mortality rate"
+  )
 ```
 
 
-Thirty day mortality vs. First lab measurements
+#### Thirty day mortality vs. First lab measurements
 ```{r}
-
-lab_colnames <- list(str_to_lower(
+lab_colnames <- c(str_to_lower(
       str_replace_all(labitems_dict$label, " ", "_")
     ))
-lab_colnames
+
+# Summary statistics
+mimic_icu_cohort %>% 
+  select(lab_colnames, thirty_day_mort) %>%
+  pivot_longer(lab_colnames, names_to = "lab_type", values_to = "reading") %>% 
+  group_by(lab_type, thirty_day_mort) %>%
+  summarise(avg_reading = mean(reading, na.rm = TRUE),
+            med_reading = median(reading, na.rm = TRUE),
+            min_reading = min(reading, na.rm = TRUE),
+            max_reading = max(reading, na.rm = TRUE),
+            sd_reading = sd(reading, na.rm = TRUE),
+            count = sum(!is.na(reading))) %>%
+  print(n = Inf, width = Inf) 
+
+# Plotting
+mimic_icu_cohort %>% 
+  select(lab_colnames, thirty_day_mort) %>%
+  pivot_longer(lab_colnames, names_to = "lab_type", values_to = "reading") %>% 
+  group_by(lab_type, thirty_day_mort) %>% 
+  ggplot(mapping = aes(x = factor(thirty_day_mort), y = reading)) +
+  facet_wrap(~lab_type, scales = "free", ncol = 2) +
+  geom_boxplot() +
+  labs(
+    title = "Lab reading distributions by 30-day mortality status",
+    x = "30-day Mortality",
+    y = "Lab reading"
+  )
 ```
 
-Thirty day mortality vs. First vital measurements
+#### Thirty day mortality vs. First vital measurements
 ```{r}
-vital_colnames <- list(str_to_lower(
+# Follow an approach similarly to above
+vital_colnames <- c(str_to_lower(
       str_replace_all(chartevents_dict$label, " ", "_")
     ))
-vital_colnames
+
+# Summary statistics
+mimic_icu_cohort %>% 
+  select(vital_colnames, thirty_day_mort) %>% 
+  pivot_longer(vital_colnames, 
+               names_to = "vital_type", 
+               values_to = "reading") %>% 
+  group_by(vital_type, thirty_day_mort) %>% 
+  summarise(avg_reading = mean(reading, na.rm = TRUE),
+            med_reading = median(reading, na.rm = TRUE),
+            min_reading = min(reading, na.rm = TRUE),
+            max_reading = max(reading, na.rm = TRUE),
+            sd_reading = sd(reading, na.rm = TRUE),
+            count = sum(!is.na(reading))) %>%
+  print(n = Inf, width = Inf)
+
+# Plotting
+mimic_icu_cohort %>% 
+  select(vital_colnames, thirty_day_mort) %>%
+  pivot_longer(vital_colnames, 
+               names_to = "vital_type", 
+               values_to = "reading") %>% 
+  group_by(vital_type, thirty_day_mort) %>%
+  ggplot(mapping = aes(x = factor(thirty_day_mort), y = reading)) +
+  facet_wrap(~vital_type, scales = "free", ncol = 2) +
+  geom_boxplot() +
+  labs(
+    title = "Vital reading distributions by 30-day mortality status",
+    x = "30-day Mortality",
+    y = "Vital reading"
+  )
 ```
 
 
+#### Thirty day mortality vs. First care unit
 ```{r}
 # Mortality vs. first ICU unit
 mimic_icu_cohort %>% 
   group_by(first_careunit) %>% 
   summarise(avg_mortality = mean(thirty_day_mort),
-            count_died = sum(thirty_day_mort))
+            count_died = sum(thirty_day_mort)) %>%
+  print(width = Inf, n = Inf) %>% 
+  
+  ungroup() %>% 
+  ggplot(mapping = aes(x = first_careunit, y = avg_mortality)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "30 day mortality rates by First care unit vary widely",
+    x = "First care unit",
+    y = "30 day mortality rate"
+  )
 ```
 
