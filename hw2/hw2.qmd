@@ -731,7 +731,7 @@ chartevents_tble %>%
   facet_wrap(~chart_item, scales = "free") +
   geom_histogram() +
   labs(
-    title = "Vital readings vary widely with very high extreme values"
+    title = "Vital readings vary widely with very high extreme values",
     x = "Measurement value",
     y = "Count"
   )
@@ -753,7 +753,8 @@ chartevents_tble %>%
 These distributions don't look very good visually, because there are some very 
 extreme values. Let's plot again removing the top 5 percentiles from 
 each variable. This is just a heuristic for visualization, and probably wouldn't
-be a good way to deal with these extreme values in practice.
+be a good way to deal with these extreme values when conducting further 
+analysis.
 
 ```{r}
 # Histograms
@@ -768,7 +769,7 @@ chartevents_tble %>%
   geom_histogram() +
   labs(
     title = "Most vital measurements follow symmetric distributions after truncating
-    high values"
+    extreme values",
     x = "Measurement value",
     y = "Count"
   )
