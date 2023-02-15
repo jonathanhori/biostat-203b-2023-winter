@@ -266,8 +266,8 @@ admissions_tble %>%
   )
 ```
 Admissions by day of the month are also roughly constant over time, with a drop
-on the 31st of the month. Since not every month has 31 days, it seems likely 
-this is just an artifact of this source of bias.
+on the 31st of the month. Not every month has 31 days, so it makes sense that
+the count would be lower.
 ```{r}
 # Admit day of month
 admissions_tble %>% 
@@ -307,7 +307,7 @@ admissions_tble %>%
   ggplot() +
   geom_bar(mapping = aes(x = admit_hour)) +
   labs(
-    title = "Count of admissions by hour",
+    title = "Admissions rise in the afternoon, but have jumps at midnight and 7am",
     x = "Admit hour",
     y = "Count"
   )
@@ -324,7 +324,7 @@ admissions_tble %>%
   ggplot() +
   geom_bar(mapping = aes(x = admit_minute)) +
   labs(
-    title = "Count of admissions by minute",
+    title = "Admissions by minute roughly flat, but have jumps at quarter hours",
     x = "Admit minute",
     y = "Count"
   )
@@ -339,7 +339,7 @@ admissions_tble %>%
   ggplot() +
   geom_histogram(mapping = aes(x = los), bins=50) +
   labs(
-    title = "Count of admissions by length of stay",
+    title = "Length of stay distribution is positively skewed",
     x = "Length of stay",
     y = "Count"
   )
@@ -483,6 +483,7 @@ system(
 labevents_filename <- str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz")
 ```
 
+Row count:
 ```{r}
 system(
   str_c(
@@ -493,7 +494,8 @@ system(
   intern = TRUE
 )
 ```
-Omitting the header, there are 122,103,667 rows in the `labevents` data. 
+Omitting the header, there are 122,103,667 rows in the `labevents` data. In the
+filtered data, there are 30,198,826 rows.
 
 #### 2.
 ```{r}
@@ -520,8 +522,6 @@ labitems_dict <- read_csv(str_c(mimic_path, "/hosp/d_labitems.csv.gz")) %>%
 labevents_tble <- semi_join(labevents_tble, icustays_tble,
                             by = "subject_id")
 
-# labevents_tble %>% distinct(subject_id) %>% nrow()
-
 lab_itemid_to_keep <- c(
   50912,
   50971,
@@ -541,11 +541,8 @@ labevents_tble <- labevents_tble %>%
 # Filter dictionary
 labitems_dict <- labitems_dict %>% 
   filter(itemid %in% lab_itemid_to_keep)
-
-# labevents_tble %>% distinct(subject_id) %>% nrow()
 ```
 
-After filtering for the right patients and lab types, we have 6,788,195 rows.
 
 #### 3. 
 ```{r}
@@ -576,8 +573,6 @@ labevents_tble <- labevents_tble %>%
   ) %>% 
   print(width = Inf)
 
-# 51892 ?
-
 ```
 
 
@@ -589,6 +584,7 @@ labevents_tble %>%
   facet_wrap(~lab_item, scales = "free") +
   geom_histogram() +
   labs(
+    title = "Lab measurement distributions are either symmetric or right skewed",
     x = "Measurement",
     y = "Count"
   )
@@ -670,6 +666,7 @@ chartevents_tble <- read_csv(chartevents_filename,
                              col_select = chartevents_cols_to_keep) %>% 
   print(width = Inf)
 chartevents_dict <- read_csv(chartevents_itemid_dict_filename) %>% 
+  select(itemid, label) %>% 
   print(width = Inf)
 ```
 
@@ -723,11 +720,8 @@ chartevents_tble <- chartevents_tble %>%
 ```
 
 #### 3.
-We produce similar distribution plots and summary statistics as in Question 5.
-Note the below code is not as DRY as it could be (calling `pivot_longer` twice,
-for example), but to avoid requiring another package (`magrittr`), 
-we avoid using the Tee pipe `%T>%`, which would facilitate calling `ggplot` and 
-`summarise` in the same pipe.
+We produce distribution plots and summary statistics similar to those in 
+Question 5.
 
 ```{r}
 # Histograms
@@ -737,6 +731,7 @@ chartevents_tble %>%
   facet_wrap(~chart_item, scales = "free") +
   geom_histogram() +
   labs(
+    title = "Vital readings vary widely with very high extreme values"
     x = "Measurement value",
     y = "Count"
   )
@@ -755,6 +750,29 @@ chartevents_tble %>%
 
 ```
 
+These distributions don't look very good visually, because there are some very 
+extreme values. Let's plot again removing the top 5 percentiles from 
+each variable. This is just a heuristic for visualization, and probably wouldn't
+be a good way to deal with these extreme values in practice.
+
+```{r}
+# Histograms
+chartevents_tble %>% 
+  # filter(-subject_id) %>% 
+  filter(across(!c(subject_id), 
+                ~.x <= quantile(.x, 0.95, na.rm = TRUE))
+         ) %>% 
+  pivot_longer(!subject_id, names_to = "chart_item", values_to = "values") %>% 
+  ggplot(aes(values)) +
+  facet_wrap(~chart_item, scales = "free") +
+  geom_histogram() +
+  labs(
+    title = "Most vital measurements follow symmetric distributions after truncating
+    high values"
+    x = "Measurement value",
+    y = "Count"
+  )
+```
 
 ## Q7. Putting things together
 
@@ -785,6 +803,9 @@ mimic_icu_cohort <- icustays_tble %>%
   print(width = Inf)
 ```
 
+```{r}
+table(mimic_icu_cohort$thirty_day_mort)
+```
 ## Q8. Exploratory data analysis (EDA)
 
 Summarize following information using appropriate numerics or graphs.
@@ -875,8 +896,8 @@ mimic_icu_cohort %>%
   pivot_longer(lab_colnames, names_to = "lab_type", values_to = "reading") %>% 
   group_by(lab_type, thirty_day_mort) %>% 
   ggplot(mapping = aes(x = factor(thirty_day_mort), y = reading)) +
-  facet_wrap(~lab_type, scales = "free", space = "free_y", ncol = 2) +
-  geom_boxplot() +
+  facet_wrap(~lab_type, scales = "free", ncol = 2) +
+  geom_violin() +
   labs(
     title = "Lab reading distributions by 30-day mortality status",
     x = "30-day Mortality",
@@ -885,6 +906,9 @@ mimic_icu_cohort %>%
 ```
 
 #### Thirty day mortality vs. First vital measurements
+
+Because of the extreme values noticed in Q6, we remove the top 5 
+percentiles for visualization purposes.
 ```{r}
 # Follow an approach similarly to above
 vital_colnames <- c(str_to_lower(
@@ -909,6 +933,9 @@ mimic_icu_cohort %>%
 # Plotting
 mimic_icu_cohort %>% 
   select(vital_colnames, thirty_day_mort) %>%
+  filter(across(vital_colnames, 
+                ~.x <= quantile(.x, 0.95, na.rm = TRUE))
+         ) %>% 
   pivot_longer(vital_colnames, 
                names_to = "vital_type", 
                values_to = "reading") %>% 
@@ -938,7 +965,7 @@ mimic_icu_cohort %>%
   geom_col() +
   coord_flip() +
   labs(
-    title = "30 day mortality rates by First care unit vary widely",
+    title = "30 day mortality rates by first care unit vary widely",
     x = "First care unit",
     y = "30 day mortality rate"
   )
