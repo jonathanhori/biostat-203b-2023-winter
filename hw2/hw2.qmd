@@ -1,6 +1,6 @@
 ---
 title: "Biostat 203B Homework 2"
-subtitle: Due Feb 10 @ 11:59PM
+subtitle: Due Feb 15 @ 11:59PM
 author: Jonathan Hori - 305947261
 format:
   html:
@@ -156,7 +156,12 @@ grouped_stays %>%
 grouped_stays %>%
   filter(count > 5) %>%
   ggplot() +
-    geom_bar(mapping = aes(x = count))
+  geom_bar(mapping = aes(x = count)) +
+  labs(
+    title = "Distribution of ICU stay counts for those having more than 5 stays",
+    x = "Stay count",
+    y = "Patient count"
+  )
 ```
 
 We observe that there are 53,150 unique patients in the ICU stays data. Patients
@@ -331,7 +336,10 @@ admissions_tble %>%
 ```
 
 The below data is measured in hours. The length of stay distribution is highly 
-positively skewed.
+positively skewed. It is unusual that some stays are extremely short. For 
+example, the shortest stay is 0.00125 days, which is 1.8 minutes. It also seems
+that `los` is not always the same as the time difference between `admittime` and
+`dischtime`.
 
 ```{r}
 # Length of stay
@@ -344,7 +352,7 @@ admissions_tble %>%
     y = "Count"
   )
 
-# admissions_tble %>% select(length_of_stay) %>% arrange(desc(length_of_stay))
+admissions_tble %>% select(los) %>% arrange(los)
 ```
 
 ## Q4. `patients` data
@@ -435,9 +443,10 @@ patients_tble %>%
 
 We observe that there are more males than females in this dataset, with 29,797 
 males and 23,353 females. The shapes of age distributions per gender look 
-roughly similar. Interestingly, the number of patients per age begins to decline 
-for men after peaking around age 65, whereas the number of patients per age 
-remains roughly constant as women get older, only declining at higher ages.
+roughly similar, with slightly different trends. Interestingly, the number of 
+patients per age begins to decline for men after peaking around age 65, whereas 
+the number of patients per age remains roughly constant as women get older, only 
+declining at higher ages.
 
 
 ## Q5. Lab results
@@ -488,7 +497,7 @@ Row count:
 system(
   str_c(
     "zcat < ", 
-    labevents_filename, 
+    str_c(mimic_path, "/hosp/labevents.csv.gz"), 
     " | tail +2 | wc -l"
     ), 
   intern = TRUE
@@ -789,16 +798,16 @@ Let us create a tibble `mimic_icu_cohort` for all ICU stays, where rows are the 
 ### ANSWER
 
 ```{r}
-# todo drop repeated los variable
-
 mimic_icu_cohort <- icustays_tble %>% 
-  left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>% 
+  left_join(admissions_tble %>% select(-los), # removing the los var from Q3
+            by = c("subject_id", "hadm_id")) %>% 
   left_join(patients_tble, by = "subject_id") %>% 
   left_join(labevents_tble, by = "subject_id") %>% 
   left_join(chartevents_tble, by = "subject_id") %>% 
   mutate(
     thirty_day_mort = as.integer(
-      (deathtime <= intime + days(30)) %>% replace(is.na(.), FALSE)
+      ((dod <= admittime + days(30)) & (dod > admittime)) %>% 
+        replace(is.na(.), FALSE)
     )) %>% 
   ungroup() %>% 
   print(width = Inf)
@@ -851,10 +860,19 @@ mimic_icu_cohort %>%
   coord_flip() + 
   labs(
     title = "Thirty day mortality rates by demographic category",
-    x = "Thirty day mortality rate",
-    y = "Demographic variable"
+    y = "Thirty day mortality rate",
+    x = "Demographic variable"
   )
 ```
+
+We see that thirty day mortality rates differ when splitting by demographic
+category, though some categories are more informative than others. Some 
+interesting observations here include: for ethnicity, being unable to obtain
+a patient's ethnicity seems related to having higher mortality. Additionally, 
+Medicare patients have much higher mortality rates than other insurances. 
+Language seems uninformative for mortality rates, but many different languages 
+are obscured by the `?` coding.
+
 
 ```{r}
 # Now we can look at anchor_age
@@ -870,7 +888,8 @@ mimic_icu_cohort %>%
     y = "Thirty day mortality rate"
   )
 ```
-
+This result seems straightforward, that older patients die more than younger
+patients.
 
 #### Thirty day mortality vs. First lab measurements
 ```{r}
@@ -901,10 +920,14 @@ mimic_icu_cohort %>%
   geom_violin() +
   labs(
     title = "Lab reading distributions by 30-day mortality status",
-    x = "30-day Mortality",
+    x = "30-day Mortality Status",
     y = "Lab reading"
   )
 ```
+
+A notable takeaway from these charts is that there is higher variance in 
+lab readings among patients who later die. 
+
 
 #### Thirty day mortality vs. First vital measurements
 
@@ -946,11 +969,13 @@ mimic_icu_cohort %>%
   geom_violin() +
   labs(
     title = "Vital reading distributions by 30-day mortality status",
-    x = "30-day Mortality",
+    x = "30-day Mortality Status",
     y = "Vital reading"
   )
 ```
-
+We see again that there is higher variance in mortality in vital readings 
+among patients who die. Many of these readings are higher on average than for 
+patients who survive.
 
 #### Thirty day mortality vs. First care unit
 ```{r}
@@ -972,3 +997,7 @@ mimic_icu_cohort %>%
   )
 ```
 
+Mortality rates vary widely by first care unit. This seems related to the 
+purposes and specialties of each unit, with patients entering certain care 
+units like `Neuro SICU` or `MICU` having higher prior probabilities of death. 
+This is a good example of endogeneity in these data.
