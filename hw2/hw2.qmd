@@ -121,7 +121,7 @@ system(
 4. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
 
 ### ANSWER
-#### 1-2.
+#### 1-3.
 ```{r}
 icustays_filename <- str_c(mimic_path, "/icu/icustays.csv.gz")
 
@@ -132,7 +132,6 @@ icustays_tble %>%
   count
 ```
 
-#### 3. 
 ```{r}
 # Saving grouped data to reuse for multiple ggplots
 grouped_stays <- icustays_tble %>% 
