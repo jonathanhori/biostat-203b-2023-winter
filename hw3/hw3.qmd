@@ -205,6 +205,23 @@ Only keep the first chart events during ICU stay and pivot chart events to becom
 ```{r}
 chartevents_tble <- chartevents_tble %>% 
   # Filter for intime and outtime
+  left_join(select(icustays_tble, subject_id, intime, outtime),
+            by = "subject_id") %>% 
+  filter((charttime >= intime) & (charttime <= outtime)) %>% 
+  
+  # Slice first events
+  group_by(subject_id, itemid) %>%
+  arrange(charttime, .by_group = TRUE) %>%
+  filter(row_number() == 1) %>%
+  ungroup() %>%
+  
+  # Join with labels
+  left_join(chartevents_dict_tble, by = "itemid") %>%
+  
+  # Pivot wider
+  select(-itemid, -charttime, -intime, -outtime) %>%
+  pivot_wider(names_from = label_clean, values_from = valuenum) %>%
+  print(width = Inf)
   
 ```
 
