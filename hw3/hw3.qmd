@@ -235,8 +235,31 @@ if (!dir.exists("mimiciv_shiny")) {
 ```
 
 ```{r}
-# # TODO
-# icu_cohort <- icustays_tble %>% ...
+icu_cohort <- icustays_tble %>% 
+  left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>% 
+  left_join(patients_tble, by = "subject_id") %>% 
+  
+  # Filter for adults
+  filter(anchor_age >= 18) %>% 
+
+  left_join(labevents_tble, by = "subject_id") %>% 
+  left_join(chartevents_tble, by = "subject_id") %>% 
+  
+  # Add thirty day mortality
+  mutate(
+    thirty_day_mort = as.integer(
+      sql('(dod <= date_add(admittime, interval 30 day)) 
+          and (dod > admittime)'))
+  ) %>% 
+  mutate(
+    thirty_day_mort = sql('coalesce(thirty_day_mort, 0)')
+  ) %>%
+  print(width = Inf) %>% 
+  
+  # Save to RDS
+  collect() %>% 
+  saveRDS(file = "./mimiciv_shiny/icu_cohort.rds")
+  
 ```
 
 Close database connection and clear workspace.
