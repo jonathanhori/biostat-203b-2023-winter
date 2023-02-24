@@ -1,6 +1,8 @@
 # Load packages ----
 library(shiny)
-# library(quantmod)
+library(tidyverse)
+library(ggplot2)
+library(quantmod)
 
 # Source helpers ----
 # source("helpers.R")
@@ -12,35 +14,26 @@ library(shiny)
 # - grouped by another variable
 # 2. Summary statistics of numerical variables
 # 2. Distplots by mortality 
-
+cohort <- readRDS("./data/icu_cohort.rds")
+getwd()
 
 # User interface ----
 ui <- fluidPage(
-  titlePanel("stockVis"),
-  
+  titlePanel("MIMIC-IV Cohort EDA"),
+   
   sidebarLayout(
     sidebarPanel(
-      helpText("Select a stock to examine. 
-               Information will be collected from Yahoo finance."),
+      helpText("Select a cohort variable to examine."),
       
-      textInput("symb", "Symbol", "GOOG"),
+      # varSelectInput("var_name", "Variable of interest", cohort),
+      textInput("var_name_s", "Variable of interest", 'first_careunit'),
       
-      dateRangeInput("dates", 
-                     "Date range",
-                     start = "2013-01-01", 
-                     end = as.character(Sys.Date())),
       
-      br(),
-      br(),
-      
-      checkboxInput("log", "Plot y axis on log scale", 
-                    value = FALSE),
-      
-      checkboxInput("adjust", 
-                    "Adjust prices for inflation", value = FALSE)
     ),
     
-    mainPanel(plotOutput("plot"))
+    mainPanel(
+      plotOutput("plot")
+      )
   )
 )
 
@@ -48,15 +41,27 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   dataInput <- reactive({
-    getSymbols(input$symb, src = "yahoo", 
-               from = input$dates[1],
-               to = input$dates[2],
-               auto.assign = FALSE)
+    cohort %>% 
+      select(input$var_name_s)
   })
   
+  # output$plot <- renderPlot({
+  #   cohort %>% 
+  #     ggplot() +
+  #     geom_bar(aes(x = !!input$var_name))
+  #   
+  # })
+  
   output$plot <- renderPlot({
-    chartSeries(dataInput(), theme = chartTheme("white"), 
-                type = "line", log.scale = input$log, TA = NULL)
+    dataInput() %>% 
+      ggplot(aes_string(x = input$var_name_s)) +
+      geom_bar()
+    
+  })
+  
+  output$summary <- renderTable({
+    dataInput() %>% 
+      group_by(input$var_name_s)
   })
   
 }
