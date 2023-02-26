@@ -42,16 +42,12 @@ ui <- fluidPage(
                     "Insurance" = "insurance"
                   )
                   )),
-      # textInput("var_name", "Variable of interest", 'first_careunit'),
-      
       
     ),
     
-    
-    
     mainPanel(
-      plotOutput("plot"),
-      tableOutput("summary")
+      plotOutput("cohort_plot"),
+      tableOutput("cohort_summary")
       )
   ),
   
@@ -75,18 +71,17 @@ ui <- fluidPage(
                     "Systolic blood pressure" = "non_invasive_blood_pressure_systolic",
                     "Average blood pressure" = "non_invasive_blood_pressure_mean",
                     "Respiratory rate" = "respiratory_rate",
-                    "Body temperature in Fahrenheit" = "temperature_fahrenhe"
+                    "Body temperature in Fahrenheit" = "temperature_fahrenheit"
                   )
                   )),
-      # textInput("var_name", "Variable of interest", 'first_careunit'),
       
       
     ),
     
     
     mainPanel(
-      # plotOutput("plot"),
-      # tableOutput("summary")
+      plotOutput("hist_plot"),
+      tableOutput("vital_summary")
     )
   )
   
@@ -98,31 +93,46 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output) {
-  
-  dataInput <- reactive({
+  # Data
+  cohort_data_input <- reactive({
     cohort %>% 
       select(input$var_name)
   })
   
-  # output$plot <- renderPlot({
-  #   cohort %>% 
-  #     ggplot() +
-  #     geom_bar(aes(x = !!input$var_name))
-  #   
-  # })
   
-  output$plot <- renderPlot({
-    dataInput() %>% 
+  vital_data_input <- reactive({
+    cohort %>% 
+      select(input$vital_lab_name)
+  })
+  
+  # Cohort summary
+  output$cohort_plot <- renderPlot({
+    cohort_data_input() %>% 
       ggplot(aes_string(x = input$var_name)) +
       geom_bar()
     
   })
   
-  output$summary <- renderTable({
-    dataInput() %>% 
+  output$cohort_summary <- renderTable({
+    cohort_data_input() %>% 
       # group_by(input$var_name) %>% 
       summarise(count = n(),
                 average = mean(!!input$var_name, na.rm = TRUE))
+  })
+  
+  # Vital + lab summary
+  output$hist_plot <- renderPlot({
+    vital_data_input() %>% 
+      ggplot(aes_string(x = input$vital_lab_name)) +
+      geom_histogram()
+    
+  })
+  
+  output$vital_summary <- renderTable({
+    vital_data_input() %>% 
+      # group_by(input$var_name) %>% 
+      summarise(count = n(),
+                average = mean(!!input$vital_lab_name, na.rm = TRUE))
   })
   
 }
