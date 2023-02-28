@@ -43,11 +43,16 @@ ui <- fluidPage(
                   )
                   )),
       
+      checkboxInput("mortality_split_cohort", 
+                    "Split by 30 day mortality status?", 
+                    FALSE)
+      
     ),
     
     mainPanel(
       plotOutput("cohort_plot"),
-      tableOutput("cohort_summary")
+      tableOutput("cohort_summary"),
+      # tableOutput("test_table")
       )
   ),
   
@@ -68,12 +73,18 @@ ui <- fluidPage(
                   ),
                   Vitals = c(
                     "Heart rate" = "heart_rate",
-                    "Systolic blood pressure" = "non_invasive_blood_pressure_systolic",
-                    "Average blood pressure" = "non_invasive_blood_pressure_mean",
+                    "Systolic blood pressure" = 
+                      "non_invasive_blood_pressure_systolic",
+                    "Average blood pressure" = 
+                      "non_invasive_blood_pressure_mean",
                     "Respiratory rate" = "respiratory_rate",
                     "Body temperature in Fahrenheit" = "temperature_fahrenheit"
                   )
                   )),
+      
+      checkboxInput("mortality_split", 
+                    "Split by 30 day mortality status?", 
+                    FALSE)
       
       
     ),
@@ -95,45 +106,88 @@ ui <- fluidPage(
 server <- function(input, output) {
   # Data
   cohort_data_input <- reactive({
-    cohort %>% 
-      select(input$var_name)
+    if (input$mortality_split_cohort) {
+      cohort %>% 
+        select(input$var_name, thirty_day_mort) %>% 
+        drop_na() %>%
+        group_by(thirty_day_mort)
+    } else {
+      cohort %>% 
+        select(input$var_name) %>% 
+        drop_na()
+    }
+    
   })
   
   
   vital_data_input <- reactive({
-    cohort %>% 
-      select(input$vital_lab_name)
+    if (input$mortality_split) {
+      cohort %>% 
+        select(input$vital_lab_name, thirty_day_mort) %>%
+        drop_na() %>% 
+        group_by(thirty_day_mort)
+    } else {
+      cohort %>% 
+        select(input$vital_lab_name) %>% 
+        drop_na()
+    }
   })
   
   # Cohort summary
   output$cohort_plot <- renderPlot({
-    cohort_data_input() %>% 
-      ggplot(aes_string(x = input$var_name)) +
-      geom_bar()
+    p <- cohort_data_input()
+    
+    if (input$mortality_split_cohort) {
+      p %>% 
+        ggplot(aes_string(y = input$var_name)) +
+        geom_bar() +
+        facet_wrap(~ thirty_day_mort)
+    } else {
+      p %>% 
+        ggplot(aes_string(y = input$var_name)) + 
+        geom_bar()
+    }
+    
     
   })
   
   output$cohort_summary <- renderTable({
     cohort_data_input() %>% 
-      # group_by(input$var_name) %>% 
-      summarise(count = n(),
-                average = mean(!!input$var_name, na.rm = TRUE))
+      summarise(count = n()
+                # average = mean(get(input$var_name), na.rm = TRUE),
+                # median = median(get(input$var_name)),
+                # std = sd(get(input$var_name)),
+                # min = min(get(input$var_name)),
+                # max = max(get(input$var_name))
+                )
   })
   
   # Vital + lab summary
   output$hist_plot <- renderPlot({
-    vital_data_input() %>% 
+    p <- vital_data_input() %>% 
       ggplot(aes_string(x = input$vital_lab_name)) +
       geom_histogram()
     
+    if (input$mortality_split) {
+      p + facet_wrap(~ thirty_day_mort)
+    } else {
+      p
+    }
   })
   
   output$vital_summary <- renderTable({
     vital_data_input() %>% 
       # group_by(input$var_name) %>% 
       summarise(count = n(),
-                average = mean(!!input$vital_lab_name, na.rm = TRUE))
+                average = mean(get(input$vital_lab_name), na.rm = TRUE),
+                median = median(get(input$vital_lab_name)),
+                std = sd(get(input$vital_lab_name)),
+                min = min(get(input$vital_lab_name)),
+                max = max(get(input$vital_lab_name)),
+                )
   })
+  
+  output$test_table <- renderTable({cohort_data_input() %>% head()})
   
 }
 
