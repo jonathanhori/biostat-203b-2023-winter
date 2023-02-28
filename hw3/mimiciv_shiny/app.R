@@ -109,11 +109,13 @@ server <- function(input, output) {
     if (input$mortality_split_cohort) {
       cohort %>% 
         select(input$var_name, thirty_day_mort) %>% 
-        drop_na() %>%
-        group_by(thirty_day_mort)
+        drop_na() 
+      # %>%
+      #   group_by(thirty_day_mort)
     } else {
       cohort %>% 
-        select(input$var_name) %>% 
+        # select(input$var_name) %>% 
+        select(input$var_name, thirty_day_mort) %>%
         drop_na()
     }
     
@@ -149,7 +151,9 @@ server <- function(input, output) {
   
   output$cohort_summary <- renderTable({
     cohort_data_input() %>% 
-      summarise(count = n()
+      group_by(get(input$var_name)) %>% 
+      summarise(count = n(),
+                mortality_rate = avg(thirty_day_mort)
                 # average = mean(get(input$var_name), na.rm = TRUE),
                 # median = median(get(input$var_name)),
                 # std = sd(get(input$var_name)),
