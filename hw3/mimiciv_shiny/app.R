@@ -135,17 +135,13 @@ server <- function(input, output) {
   
   # Cohort summary
   output$cohort_plot <- renderPlot({
-    p <- cohort_data_input()
+    p <- cohort_data_input() %>% 
+      ggplot(aes(y = get(input$var_name))) 
     
     if (input$mortality_split_cohort) {
-      p %>% 
-        ggplot(aes_string(y = input$var_name)) +
-        geom_bar() +
-        facet_wrap(~ thirty_day_mort)
+      p + geom_bar(aes(fill = as.factor(thirty_day_mort)))
     } else {
-      p %>% 
-        ggplot(aes_string(y = input$var_name)) + 
-        geom_bar()
+      p + geom_bar()
     }
     
     
