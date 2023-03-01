@@ -9,7 +9,12 @@ getwd()
 # User interface ----
 ui <- fluidPage(
   titlePanel("MIMIC-IV Cohort EDA"),
-   
+  h3("Find summary statistics, visuals, and distributions for 
+              our MIMIC cohort"),
+  
+  ##################
+  # Cohort variables
+  h4("Patient or stay characteristics"),
   sidebarLayout(
     sidebarPanel(
       helpText("Select a cohort variable to examine."),
@@ -40,10 +45,14 @@ ui <- fluidPage(
     
     mainPanel(
       plotOutput("cohort_plot"),
+      plotOutput("line_plot"),
       tableOutput("cohort_summary"),
       )
   ),
   
+  ##################
+  # Vitals/Lab measurements
+  h4("Vital measurements or lab results"),
   sidebarLayout(
     sidebarPanel(
       helpText("Select a lab test or vital measurement to examine."),
@@ -99,6 +108,14 @@ server <- function(input, output) {
       select(input$var_name, thirty_day_mort) %>% 
       drop_na() 
     
+  })
+  
+  
+  count_data_input <- reactive({
+    cohort %>% 
+      select(admittime, input$var_name) %>% 
+      group_by(admittime, input$var_name) %>% 
+      count()
   })
   
   
@@ -169,6 +186,30 @@ server <- function(input, output) {
                 min = min(get(input$vital_lab_name)),
                 max = max(get(input$vital_lab_name)),
                 )
+  })
+  
+  
+  
+  
+  
+  #####################
+  # Counts over time
+  output$line_plot <- renderPlot({
+    p <- count_data_input() %>%
+      ggplot(aes(x = admittime, group = input$var_name)) +
+      geom_line() 
+    
+    #stat = "count")# = "line", aes(y = ..count..)) 
+    #+
+      # labs(
+      #   title = "Lab test or vital measurement distribution"
+      # )
+
+    # if (input$mortality_split) {
+    #   p + facet_wrap(~ thirty_day_mort)
+    # } else {
+    #   p
+    # }
   })
 }
 
