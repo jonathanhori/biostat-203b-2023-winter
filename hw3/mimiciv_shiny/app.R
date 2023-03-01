@@ -106,18 +106,9 @@ ui <- fluidPage(
 server <- function(input, output) {
   # Data
   cohort_data_input <- reactive({
-    if (input$mortality_split_cohort) {
-      cohort %>% 
-        select(input$var_name, thirty_day_mort) %>% 
-        drop_na() 
-      # %>%
-      #   group_by(thirty_day_mort)
-    } else {
-      cohort %>% 
-        # select(input$var_name) %>% 
-        select(input$var_name, thirty_day_mort) %>%
-        drop_na()
-    }
+    cohort %>% 
+      select(input$var_name, thirty_day_mort) %>% 
+      drop_na() 
     
   })
   
@@ -138,7 +129,12 @@ server <- function(input, output) {
   # Cohort summary
   output$cohort_plot <- renderPlot({
     p <- cohort_data_input() %>% 
-      ggplot(aes(y = get(input$var_name))) 
+      ggplot(aes(y = get(input$var_name))) +
+      labs(
+        y = input$var_name,
+        fill = "Thirty day mortality status",
+        title = "Patient count by stay or patient variable group"
+      )
     
     if (input$mortality_split_cohort) {
       p + geom_bar(aes(fill = as.factor(thirty_day_mort)))
@@ -153,12 +149,7 @@ server <- function(input, output) {
     cohort_data_input() %>% 
       group_by(get(input$var_name)) %>% 
       summarise(count = n(),
-                mortality_rate = avg(thirty_day_mort)
-                # average = mean(get(input$var_name), na.rm = TRUE),
-                # median = median(get(input$var_name)),
-                # std = sd(get(input$var_name)),
-                # min = min(get(input$var_name)),
-                # max = max(get(input$var_name))
+                mortality_rate = mean(thirty_day_mort)
                 )
   })
   
@@ -166,7 +157,10 @@ server <- function(input, output) {
   output$hist_plot <- renderPlot({
     p <- vital_data_input() %>% 
       ggplot(aes_string(x = input$vital_lab_name)) +
-      geom_histogram()
+      geom_histogram() + 
+      labs(
+        title = "Lab test or vital measurement distribution"
+      )
     
     if (input$mortality_split) {
       p + facet_wrap(~ thirty_day_mort)
