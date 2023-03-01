@@ -2,18 +2,7 @@
 library(shiny)
 library(tidyverse)
 library(ggplot2)
-library(quantmod)
 
-# Source helpers ----
-# source("helpers.R")
-
-
-# ## To make
-# 1. Histogram by variable (demographics, icu unit, etc)
-# - split by other variables, split by thirty day mortality
-# - grouped by another variable
-# 2. Summary statistics of numerical variables
-# 2. Distplots by mortality 
 cohort <- readRDS("./data/icu_cohort.rds")
 getwd()
 
@@ -52,7 +41,6 @@ ui <- fluidPage(
     mainPanel(
       plotOutput("cohort_plot"),
       tableOutput("cohort_summary"),
-      # tableOutput("test_table")
       )
   ),
   
@@ -104,6 +92,7 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output) {
+  #####################
   # Data
   cohort_data_input <- reactive({
     cohort %>% 
@@ -126,6 +115,7 @@ server <- function(input, output) {
     }
   })
   
+  #####################
   # Cohort summary
   output$cohort_plot <- renderPlot({
     p <- cohort_data_input() %>% 
@@ -147,12 +137,13 @@ server <- function(input, output) {
   
   output$cohort_summary <- renderTable({
     cohort_data_input() %>% 
-      group_by(get(input$var_name)) %>% 
+      group_by_(input$var_name) %>% 
       summarise(count = n(),
                 mortality_rate = mean(thirty_day_mort)
                 )
   })
   
+  #####################
   # Vital + lab summary
   output$hist_plot <- renderPlot({
     p <- vital_data_input() %>% 
@@ -171,18 +162,14 @@ server <- function(input, output) {
   
   output$vital_summary <- renderTable({
     vital_data_input() %>% 
-      # group_by(input$var_name) %>% 
       summarise(count = n(),
-                average = mean(get(input$vital_lab_name), na.rm = TRUE),
+                average = mean(get(input$vital_lab_name)),
                 median = median(get(input$vital_lab_name)),
                 std = sd(get(input$vital_lab_name)),
                 min = min(get(input$vital_lab_name)),
                 max = max(get(input$vital_lab_name)),
                 )
   })
-  
-  output$test_table <- renderTable({cohort_data_input() %>% head()})
-  
 }
 
 # Run the app
