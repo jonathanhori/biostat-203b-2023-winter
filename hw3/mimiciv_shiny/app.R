@@ -2,6 +2,7 @@
 library(shiny)
 library(tidyverse)
 library(ggplot2)
+library(lubridate)
 
 cohort <- readRDS("./data/icu_cohort.rds")
 getwd()
@@ -47,6 +48,7 @@ ui <- fluidPage(
       plotOutput("cohort_plot"),
       plotOutput("line_plot"),
       tableOutput("cohort_summary"),
+      tableOutput("test")
       )
   ),
   
@@ -114,8 +116,9 @@ server <- function(input, output) {
   count_data_input <- reactive({
     cohort %>% 
       select(admittime, input$var_name) %>% 
-      group_by(admittime, input$var_name) %>% 
-      count()
+      mutate(day = as_date(admittime)) %>% 
+      group_by(day, across(input$var_name)) %>%
+      summarise(count = n())
   })
   
   
@@ -189,27 +192,15 @@ server <- function(input, output) {
   })
   
   
-  
+  output$test <- renderTable({count_data_input() %>%  head})
   
   
   #####################
   # Counts over time
   output$line_plot <- renderPlot({
-    p <- count_data_input() %>%
-      ggplot(aes(x = admittime, group = input$var_name)) +
-      geom_line() 
-    
-    #stat = "count")# = "line", aes(y = ..count..)) 
-    #+
-      # labs(
-      #   title = "Lab test or vital measurement distribution"
-      # )
-
-    # if (input$mortality_split) {
-    #   p + facet_wrap(~ thirty_day_mort)
-    # } else {
-    #   p
-    # }
+    count_data_input() %>%
+      ggplot(aes_string(x = "day", color = input$var_name)) +
+      geom_freqpoly() 
   })
 }
 
