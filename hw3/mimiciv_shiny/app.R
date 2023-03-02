@@ -39,17 +39,21 @@ ui <- fluidPage(
                   )),
       
       checkboxInput("mortality_split_cohort", 
-                    "Split by 30 day mortality status?", 
+                    "Split bar chart by 30 day mortality status?", 
                     FALSE)
       
     ),
     
     mainPanel(
-      plotOutput("cohort_plot"),
-      plotOutput("line_plot"),
-      tableOutput("cohort_summary"),
-      tableOutput("test")
+      tabsetPanel(type = "tabs",
+                  tabPanel("Bar chart by group", 
+                           plotOutput("cohort_plot")),
+                  tabPanel("Count by group over time", 
+                           plotOutput("line_plot")),
+                  tabPanel("Mortality rate by group", 
+                           tableOutput("cohort_summary"))
       )
+    )
   ),
   
   ##################
@@ -90,9 +94,13 @@ ui <- fluidPage(
     
     
     mainPanel(
-      plotOutput("hist_plot"),
-      tableOutput("vital_summary")
+      tabsetPanel(type = "tabs",
+                  tabPanel("Histogram", 
+                           plotOutput("hist_plot")),
+                  tabPanel("Summary statistics", 
+                           tableOutput("vital_summary"))
     )
+  )
   )
   
 )
@@ -116,8 +124,8 @@ server <- function(input, output) {
   count_data_input <- reactive({
     cohort %>% 
       select(admittime, input$var_name) %>% 
-      mutate(day = as_date(admittime)) %>% 
-      group_by(day, across(input$var_name)) %>%
+      mutate(admit_date = as_date(admittime)) %>% 
+      group_by(admit_date, across(input$var_name)) %>%
       summarise(count = n())
   })
   
@@ -192,15 +200,20 @@ server <- function(input, output) {
   })
   
   
-  output$test <- renderTable({count_data_input() %>%  head})
+  # output$test <- renderTable({count_data_input() %>%  head})
   
   
   #####################
   # Counts over time
   output$line_plot <- renderPlot({
     count_data_input() %>%
-      ggplot(aes_string(x = "day", color = input$var_name)) +
-      geom_freqpoly() 
+      ggplot(aes_string(x = "admit_date", color = input$var_name)) +
+      geom_freqpoly() +
+      labs(
+        x = "Admission date",
+        y = "Count",
+        title = "Admssion count over time"
+      )
   })
 }
 
