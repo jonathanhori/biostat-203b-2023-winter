@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 3"
 subtitle: Due Mar 1 @ 11:59PM
-author: YOUR NAME and UID
+author: Jonathan Hori - 305947261
 format:
   html:
     theme: cosmo
@@ -248,7 +248,7 @@ icustays_tble %>%
   
   # Add thirty day mortality
   mutate(
-    # want integer, NAs cause problems with casting. First fill with FALSE.
+    # NAs cause problems with casting to integer. First fill with FALSE.
     thirty_day_mort = as.integer(
       ifelse(is.na(deathtime), FALSE,
              sql("(deathtime <= date_add(admittime, interval 30 day)) 
