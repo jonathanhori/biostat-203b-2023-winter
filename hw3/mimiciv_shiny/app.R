@@ -5,7 +5,6 @@ library(ggplot2)
 library(lubridate)
 
 cohort <- readRDS("./data/icu_cohort.rds")
-getwd()
 
 # User interface ----
 ui <- fluidPage(
