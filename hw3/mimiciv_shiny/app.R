@@ -10,15 +10,20 @@ getwd()
 # User interface ----
 ui <- fluidPage(
   titlePanel("MIMIC-IV Cohort EDA"),
-  h3("Find summary statistics, visuals, and distributions for 
-              our MIMIC cohort"),
+  h4("Author: Jonathan Hori"),
+  
+  #################
+  fluidRow(
+    column(4, h4("Number of patients in cohort by mortality status:")),
+    column(8, tableOutput("mortality_table"))
+    ),
   
   ##################
   # Cohort variables
-  h4("Patient or stay characteristics"),
+  h3("Patient or stay characteristics"),
   sidebarLayout(
     sidebarPanel(
-      helpText("Select a cohort variable to examine."),
+      helpText("Select a patient or stay variable to examine."),
       
       selectInput("var_name", "Variable of interest", 
                   list(Stay = c(
@@ -58,7 +63,7 @@ ui <- fluidPage(
   
   ##################
   # Vitals/Lab measurements
-  h4("Vital measurements or lab results"),
+  h3("Vital measurements or lab results"),
   sidebarLayout(
     sidebarPanel(
       helpText("Select a lab test or vital measurement to examine."),
@@ -142,6 +147,15 @@ server <- function(input, output) {
         drop_na()
     }
   })
+  
+  #####################
+  # Mortality summary
+  output$mortality_table <- renderTable({
+    cohort_data_input() %>% 
+      select(thirty_day_mort) %>% 
+      table()
+  })
+  
   
   #####################
   # Cohort summary
