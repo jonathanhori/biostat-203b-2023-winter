@@ -259,7 +259,7 @@ icustays_tble %>%
   
   # Save to RDS
   collect() %>%
-  saveRDS(file = "./mimiciv_shiny/icu_cohort.rds")
+  saveRDS(file = "./mimiciv_shiny/data/icu_cohort.rds")
   
 ```
 
