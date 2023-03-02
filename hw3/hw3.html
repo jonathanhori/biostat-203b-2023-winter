@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="YOUR NAME and UID">
+<meta name="author" content="Jonathan Hori - 305947261">
 
 <title>Biostat 203B Homework 3</title>
 <style>
@@ -131,7 +131,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>YOUR NAME and UID </p>
+             <p>Jonathan Hori - 305947261 </p>
           </div>
   </div>
     
@@ -335,52 +335,52 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 # Database: BigQueryConnection
    subject_id  hadm_id admittime           dischtime          
         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;             
- 1   14755447 21231460 2172-04-02 14:27:00 2172-04-07 15:45:00
- 2   11735007 28683663 2150-04-07 15:02:00 2150-05-01 16:54:00
- 3   12009419 23051475 2120-11-02 19:45:00 2120-11-03 17:56:00
- 4   14612313 28633110 2163-12-16 13:58:00 2163-12-17 17:21:00
- 5   18767945 21627074 2172-03-10 05:45:00 2172-03-14 16:50:00
- 6   12849027 21102653 2181-06-16 16:12:00 2181-06-19 16:56:00
- 7   13328603 24501897 2122-02-11 02:58:00 2122-02-17 17:19:00
- 8   16465056 23900843 2176-02-27 20:49:00 2176-03-15 15:20:00
- 9   17715294 28399871 2131-07-19 21:38:00 2131-08-01 00:00:00
-10   13038181 20933231 2147-01-20 17:48:00 2147-02-12 15:18:00
+ 1   19463478 21583631 2184-10-31 23:06:00 2184-11-11 00:00:00
+ 2   14439144 29422273 2165-12-07 06:58:00 2165-12-11 16:00:00
+ 3   18618203 25011280 2123-08-13 06:16:00 2123-08-29 18:30:00
+ 4   10848875 28304289 2137-10-03 15:32:00 2137-10-06 15:00:00
+ 5   16368397 22238508 2162-05-16 04:54:00 2162-05-21 16:55:00
+ 6   18494866 29698664 2165-07-09 16:27:00 2165-07-22 12:58:00
+ 7   17408608 23178609 2139-04-30 11:09:00 2139-05-03 13:45:00
+ 8   17106911 26171354 2125-10-03 11:34:00 2125-10-06 20:15:00
+ 9   15126495 25523583 2133-07-16 21:53:00 2133-07-26 14:36:00
+10   13549558 29264705 2113-06-15 04:33:00 2113-06-25 18:55:00
    deathtime           admission_type admission_location                    
    &lt;dttm&gt;              &lt;chr&gt;          &lt;chr&gt;                                 
- 1 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 2 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 3 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 4 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 5 NA                  URGENT         TRANSFER FROM SKILLED NURSING FACILITY
- 6 2181-06-19 16:56:00 URGENT         TRANSFER FROM HOSPITAL                
- 7 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 8 NA                  URGENT         TRANSFER FROM HOSPITAL                
- 9 2131-08-01 20:52:00 URGENT         TRANSFER FROM HOSPITAL                
-10 NA                  URGENT         TRANSFER FROM HOSPITAL                
+ 1 2184-11-11 22:46:00 EW EMER.       TRANSFER FROM SKILLED NURSING FACILITY
+ 2 NA                  EW EMER.       EMERGENCY ROOM                        
+ 3 NA                  EW EMER.       EMERGENCY ROOM                        
+ 4 NA                  EW EMER.       PROCEDURE SITE                        
+ 5 NA                  EW EMER.       EMERGENCY ROOM                        
+ 6 NA                  EW EMER.       EMERGENCY ROOM                        
+ 7 NA                  EW EMER.       EMERGENCY ROOM                        
+ 8 2125-10-06 20:15:00 EW EMER.       EMERGENCY ROOM                        
+ 9 NA                  EW EMER.       EMERGENCY ROOM                        
+10 NA                  EW EMER.       WALK-IN/SELF REFERRAL                 
    discharge_location       insurance language marital_status ethnicity
    &lt;chr&gt;                    &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;    
- 1 SKILLED NURSING FACILITY Medicare  ?        &lt;NA&gt;           UNKNOWN  
- 2 SKILLED NURSING FACILITY Other     ?        &lt;NA&gt;           UNKNOWN  
- 3 HEALTHCARE FACILITY      Medicare  ENGLISH  &lt;NA&gt;           UNKNOWN  
- 4 HOME                     Other     ?        &lt;NA&gt;           WHITE    
- 5 SKILLED NURSING FACILITY Medicare  ENGLISH  &lt;NA&gt;           WHITE    
- 6 DIED                     Other     ENGLISH  &lt;NA&gt;           UNKNOWN  
- 7 HOME                     Other     ENGLISH  &lt;NA&gt;           UNKNOWN  
- 8 SKILLED NURSING FACILITY Medicaid  ENGLISH  &lt;NA&gt;           UNKNOWN  
- 9 DIED                     Other     ENGLISH  &lt;NA&gt;           UNKNOWN  
-10 REHAB                    Other     ENGLISH  &lt;NA&gt;           WHITE    
+ 1 DIED                     Medicare  ENGLISH  WIDOWED        ASIAN    
+ 2 SKILLED NURSING FACILITY Other     ENGLISH  WIDOWED        WHITE    
+ 3 SKILLED NURSING FACILITY Medicare  ENGLISH  WIDOWED        WHITE    
+ 4 SKILLED NURSING FACILITY Medicare  ENGLISH  WIDOWED        WHITE    
+ 5 HOME HEALTH CARE         Medicaid  ENGLISH  WIDOWED        OTHER    
+ 6 HOME HEALTH CARE         Medicare  ENGLISH  WIDOWED        WHITE    
+ 7 HOME HEALTH CARE         Other     ENGLISH  WIDOWED        WHITE    
+ 8 HOME                     Medicare  ENGLISH  WIDOWED        WHITE    
+ 9 SKILLED NURSING FACILITY Medicare  ENGLISH  WIDOWED        WHITE    
+10 SKILLED NURSING FACILITY Other     ?        WIDOWED        WHITE    
    edregtime           edouttime           hospital_expire_flag
    &lt;dttm&gt;              &lt;dttm&gt;                             &lt;int&gt;
- 1 NA                  NA                                     0
- 2 NA                  NA                                     0
- 3 NA                  NA                                     0
+ 1 2184-10-31 20:36:00 2184-11-01 00:51:00                    1
+ 2 2165-12-07 02:17:00 2165-12-07 08:36:00                    0
+ 3 2123-08-13 04:07:00 2123-08-13 08:55:00                    0
  4 NA                  NA                                     0
- 5 2172-03-09 22:26:00 2172-03-10 08:25:00                    0
- 6 NA                  NA                                     1
- 7 NA                  NA                                     0
- 8 NA                  NA                                     0
- 9 NA                  NA                                     1
-10 NA                  NA                                     0
+ 5 2162-05-16 03:11:00 2162-05-16 03:49:00                    0
+ 6 2165-07-09 09:08:00 2165-07-09 18:50:00                    0
+ 7 2139-04-30 08:25:00 2139-04-30 13:01:00                    0
+ 8 2125-10-03 06:39:00 2125-10-03 13:03:00                    1
+ 9 2133-07-16 18:19:00 2133-07-16 23:20:00                    0
+10 2113-06-15 02:43:00 2113-06-15 05:23:00                    0
 # … with more rows</code></pre>
 </div>
 </div>
@@ -439,16 +439,16 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 # Database: BigQueryConnection
    subject_id itemid charttime           valuenum
         &lt;int&gt;  &lt;int&gt; &lt;dttm&gt;                 &lt;dbl&gt;
- 1   10019003  51221 2153-04-01 05:28:00     25.8
- 2   10021312  50912 2113-08-16 04:58:00      0.6
- 3   10035631  50912 2114-01-06 14:35:00      1.1
- 4   10035631  50983 2115-12-01 00:00:00    134  
- 5   10035631  50971 2116-03-08 15:26:00      4.3
- 6   10038933  51301 2148-09-14 01:25:00     12.9
- 7   10057070  51221 2135-10-23 07:20:00     45.2
- 8   10074556  51301 2128-10-08 00:00:00      7.5
- 9   10074556  50902 2128-12-28 00:00:00    103  
-10   10098875  50983 2113-09-11 21:14:00    140  
+ 1   10004235  51301 2196-06-15 06:04:00     11  
+ 2   10004235  51301 2196-06-20 23:55:00     15.1
+ 3   10005348  50971 2130-10-28 21:18:00      3.5
+ 4   10019003  50912 2155-10-17 10:02:00      1.3
+ 5   10035631  50912 2113-08-28 07:07:00      0.8
+ 6   10035631  50882 2115-11-14 00:04:00     21  
+ 7   10035631  51221 2116-01-05 10:20:00     39.5
+ 8   10035747  51301 2126-05-13 02:24:00      6.1
+ 9   10048105  50983 2158-12-29 11:00:00    136  
+10   10057070  50902 2135-10-19 15:30:00     94  
 # … with more rows</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's also read the labevents dict:</span></span>
@@ -499,30 +499,30 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 <div class="cell-output cell-output-stdout">
 <pre><code># Source:   lazy query [?? x 9]
 # Database: BigQueryConnection
-   subject_id white_blood_cells potassium creatinine hematocrit sodium
-        &lt;int&gt;             &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
- 1   10016810              16.5       3.1        0.6       34.8    132
- 2   10026354              16.2       4.3        1         43.8    141
- 3   10096079              11.2       4.1        0.9       20.8    140
- 4   10106899              10.9       3.9        1.4       35.2    137
- 5   10127517              17.2       4.7        1.6       34.9    142
- 6   10152300               6.3       3.9        0.7       27.7    138
- 7   10197095              15.7       4.4       11.4       28.1    139
- 8   10201160              25         5.8        0.7       22.4    136
- 9   10206125              17.1       4.2        0.7       28.6    140
-10   10208454               9         4.3        0.8       37.2    142
-   bicarbonate glucose chloride
-         &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
- 1          27     112       97
- 2          16     117      108
- 3          26     105      109
- 4          27     100       96
- 5          22     127      110
- 6          22     134      109
- 7          24     205       98
- 8          22     142      111
- 9          23     165      110
-10          21     138      108
+   subject_id chloride creatinine white_blood_cells potassium hematocrit sodium
+        &lt;int&gt;    &lt;dbl&gt;      &lt;dbl&gt;             &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
+ 1   10064049       99        0.9              53.9       3.9       24.7    132
+ 2   10076061      101        1.1               7.3       4.1       35      137
+ 3   10103457      108        0.7              13.5       3.9       24.7    139
+ 4   10127852      109        0.9              11         3.8       35.7    143
+ 5   10142845      104        0.7               8.7       3.5       36.2    135
+ 6   10149179      108        0.6               2.8       3.5       33.8    139
+ 7   10161722      104        4.7               9         5.7       23.7    136
+ 8   10171247      105        1                 5.4       4.3       36.1    142
+ 9   10172995      102        0.4              10.6       3.6       34.1    133
+10   10217517      101        1                10.4       4.3       32      133
+   bicarbonate glucose
+         &lt;dbl&gt;   &lt;dbl&gt;
+ 1          24     131
+ 2          28     113
+ 3          26     100
+ 4          21     110
+ 5          22     110
+ 6          20      90
+ 7           9      85
+ 8          28      92
+ 9          22     129
+10          21     131
 # … with more rows</code></pre>
 </div>
 </div>
@@ -551,16 +551,16 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 # Database: BigQueryConnection
    subject_id charttime           itemid valuenum
         &lt;int&gt; &lt;dttm&gt;               &lt;int&gt;    &lt;dbl&gt;
- 1   10935357 2155-08-28 00:00:00 223761     98.7
- 2   11577197 2201-02-08 16:00:00 223761     99.3
- 3   13997063 2123-03-19 21:00:00 223761    101. 
- 4   14396949 2176-06-10 03:00:00 223761     98  
- 5   18081075 2151-05-27 19:00:00 223761     99.3
- 6   18663142 2188-07-20 16:00:00 223761     98  
- 7   19058876 2150-09-13 17:00:00 223761     99.1
- 8   10661237 2125-09-26 03:00:00 223761    100. 
- 9   12249989 2180-12-16 12:00:00 223761     97.8
-10   15537368 2137-07-06 04:00:00 223761    101. 
+ 1   12002285 2192-01-02 23:00:00 223761     97.2
+ 2   13031876 2139-03-16 19:48:00 223761     99.1
+ 3   13681485 2125-04-25 13:00:00 223761     97  
+ 4   14423216 2149-01-07 08:00:00 223761    100. 
+ 5   14642114 2135-07-23 16:00:00 223761     98.1
+ 6   14950891 2154-03-06 12:00:00 223761     98.2
+ 7   16684582 2149-09-04 20:00:00 223761     97.6
+ 8   17002995 2178-01-05 04:00:00 223761     98.2
+ 9   12172709 2188-05-22 12:00:00 223761     98  
+10   12921921 2146-08-10 04:00:00 223761    101. 
 # … with more rows</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import itemid dict for labels</span></span>
@@ -608,30 +608,42 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 <div class="cell-output cell-output-stdout">
 <pre><code># Source:   lazy query [?? x 6]
 # Database: BigQueryConnection
-   subject_id temperature_fahrenheit respiratory_rate heart_rate
-        &lt;int&gt;                  &lt;dbl&gt;            &lt;dbl&gt;      &lt;dbl&gt;
- 1   10108480                   97.3               17         85
- 2   10190973                   98.4               21         89
- 3   10266520                   98.2               15         77
- 4   10292289                   98.1               24         66
- 5   10398029                   97.8               10         85
- 6   10496867                   97.6               12         80
- 7   10526568                   98.7               16         71
- 8   10561631                   95.5               13         74
- 9   10587592                   98.4               12         60
-10   10616316                  100                 14         34
-   non_invasive_blood_pressure_mean non_invasive_blood_pressure_systolic
-                              &lt;dbl&gt;                                &lt;dbl&gt;
- 1                               64                                   90
- 2                               51                                   96
- 3                               97                                  160
- 4                               72                                   97
- 5                               67                                  114
- 6                               92                                  120
- 7                               89                                  142
- 8                               82                                  160
- 9                               79                                  134
-10                               64                                  104
+   subject_id non_invasive_blood_pressure_mean
+        &lt;int&gt;                            &lt;dbl&gt;
+ 1   10007920                               76
+ 2   10036086                               55
+ 3   10108435                              127
+ 4   10125047                               84
+ 5   10223311                              111
+ 6   10280448                               89
+ 7   10291112                               70
+ 8   10311764                               76
+ 9   10350765                               90
+10   10489976                               93
+   non_invasive_blood_pressure_systolic temperature_fahrenheit respiratory_rate
+                                  &lt;dbl&gt;                  &lt;dbl&gt;            &lt;dbl&gt;
+ 1                                  119                   99.4               28
+ 2                                   90                  101.                12
+ 3                                  187                   97.6                7
+ 4                                  137                   96.5               15
+ 5                                  144                   99                 22
+ 6                                  119                   98.3               22
+ 7                                   99                   97.8               18
+ 8                                  111                   98.5               12
+ 9                                  147                   98.6               15
+10                                  125                   99                 20
+   heart_rate
+        &lt;dbl&gt;
+ 1        115
+ 2        120
+ 3         64
+ 4         96
+ 5         86
+ 6         54
+ 7         63
+ 8         61
+ 9         96
+10         85
 # … with more rows</code></pre>
 </div>
 </div>
@@ -645,32 +657,33 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>icu_cohort <span class="ot">&lt;-</span> icustays_tble <span class="sc">%&gt;%</span> </span>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>icustays_tble <span class="sc">%&gt;%</span> </span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(admissions_tble, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"subject_id"</span>, <span class="st">"hadm_id"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(patients_tble, <span class="at">by =</span> <span class="st">"subject_id"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter for adults</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anchor_age <span class="sc">&gt;=</span> <span class="dv">18</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(labevents_tble, <span class="at">by =</span> <span class="st">"subject_id"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(chartevents_tble, <span class="at">by =</span> <span class="st">"subject_id"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add thirty day mortality</span></span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">thirty_day_mort =</span> <span class="fu">as.integer</span>(</span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sql</span>(<span class="st">'(dod &lt;= date_add(admittime, interval 30 day)) </span></span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="st">          and (dod &gt; admittime)'</span>))</span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">thirty_day_mort =</span> <span class="fu">sql</span>(<span class="st">'coalesce(thirty_day_mort, 0)'</span>)</span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">width =</span> <span class="cn">Inf</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Save to RDS</span></span>
-<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(<span class="at">file =</span> <span class="st">"./mimiciv_shiny/icu_cohort.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> <span class="fu">year</span>(admittime) <span class="sc">-</span> anchor_year <span class="sc">+</span> anchor_age) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(age <span class="sc">&gt;=</span> <span class="dv">18</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(labevents_tble, <span class="at">by =</span> <span class="st">"subject_id"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(chartevents_tble, <span class="at">by =</span> <span class="st">"subject_id"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add thirty day mortality</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># NAs cause problems with casting to integer. First fill with FALSE.</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">thirty_day_mort =</span> <span class="fu">as.integer</span>(</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ifelse</span>(<span class="fu">is.na</span>(deathtime), <span class="cn">FALSE</span>,</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>             <span class="fu">sql</span>(<span class="st">"(deathtime &lt;= date_add(admittime, interval 30 day)) </span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="st">                  and (deathtime &gt; admittime)"</span>))</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">width =</span> <span class="cn">Inf</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Save to RDS</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(<span class="at">file =</span> <span class="st">"./mimiciv_shiny/icu_cohort.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># Source:   lazy query [?? x 40]
+<pre><code># Source:   lazy query [?? x 41]
 # Database: BigQueryConnection
    subject_id intime               hadm_id  stay_id first_careunit
         &lt;int&gt; &lt;dttm&gt;                 &lt;int&gt;    &lt;int&gt; &lt;chr&gt;         
@@ -744,54 +757,54 @@ ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
  8                    0 F              48        2131 2011 - 2013      
  9                    0 F              24        2175 2014 - 2016      
 10                    0 F              49        2140 2017 - 2019      
-   dod        white_blood_cells potassium creatinine hematocrit sodium
-   &lt;date&gt;                 &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
- 1 NA                       7.8       3.3        1         30.6    130
- 2 NA                       3.5       4          0.5       30.5    141
- 3 NA                      10.6       4.4        1         41.6    139
- 4 NA                      12.1       4.6        0.5       36      134
- 5 NA                       5.4       5          8.2       30      143
- 6 2115-12-11               9.2       4.3        0.4       31.5    138
- 7 NA                       3.6       4.1        0.8       34.1    138
- 8 NA                      14.7       4          0.8       37.1    145
- 9 NA                       7.1       4.3        0.8       34.7    139
-10 NA                      20.1       3.8        0.7       39.6    137
-   bicarbonate glucose chloride temperature_fahrenheit respiratory_rate
-         &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;                  &lt;dbl&gt;            &lt;dbl&gt;
- 1          22     113       97                  102.                16
- 2          21      99      108                   98.4                5
- 3          16      78      104                   98.7               16
- 4          23     106       98                   98.3               12
- 5          19     127      105                   98                 26
- 6          26     135       98                   98.6               23
- 7          26      99      104                   98.4               18
- 8          22     157      106                   98.4               23
- 9          24      85      105                   98.6               17
-10          20      98      101                   99.5               12
-   heart_rate non_invasive_blood_pressure_mean
-        &lt;dbl&gt;                            &lt;dbl&gt;
- 1         78                               86
- 2         91                               72
- 3         67                              107
- 4         74                               99
- 5         95                               95
- 6         96                               97
- 7         89                               79
- 8         71                               99
- 9         67                               85
-10         72                              117
-   non_invasive_blood_pressure_systolic thirty_day_mort
-                                  &lt;dbl&gt;           &lt;int&gt;
- 1                                   98               0
- 2                                  111               0
- 3                                  183               0
- 4                                  162               0
- 5                                  165               0
- 6                                  132               0
- 7                                  114               0
- 8                                  144               0
- 9                                  120               0
-10                                  140               0
+   dod          age chloride creatinine white_blood_cells potassium hematocrit
+   &lt;date&gt;     &lt;int&gt;    &lt;dbl&gt;      &lt;dbl&gt;             &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+ 1 NA            80       97        1                 7.8       3.3       30.6
+ 2 NA            49      108        0.5               3.5       4         30.5
+ 3 NA            72      104        1                10.6       4.4       41.6
+ 4 NA            69       98        0.5              12.1       4.6       36  
+ 5 NA            63      105        8.2               5.4       5         30  
+ 6 2115-12-11    57       98        0.4               9.2       4.3       31.5
+ 7 NA            46      104        0.8               3.6       4.1       34.1
+ 8 NA            52      106        0.8              14.7       4         37.1
+ 9 NA            24      105        0.8               7.1       4.3       34.7
+10 NA            49      101        0.7              20.1       3.8       39.6
+   sodium bicarbonate glucose non_invasive_blood_pressure_mean
+    &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt;                            &lt;dbl&gt;
+ 1    130          22     113                               86
+ 2    141          21      99                               72
+ 3    139          16      78                              107
+ 4    134          23     106                               99
+ 5    143          19     127                               95
+ 6    138          26     135                               97
+ 7    138          26      99                               79
+ 8    145          22     157                               99
+ 9    139          24      85                               85
+10    137          20      98                              117
+   non_invasive_blood_pressure_systolic temperature_fahrenheit respiratory_rate
+                                  &lt;dbl&gt;                  &lt;dbl&gt;            &lt;dbl&gt;
+ 1                                   98                  102.                16
+ 2                                  111                   98.4                5
+ 3                                  183                   98.7               16
+ 4                                  162                   98.3               12
+ 5                                  165                   98                 26
+ 6                                  132                   98.6               23
+ 7                                  114                   98.4               18
+ 8                                  144                   98.4               23
+ 9                                  120                   98.6               17
+10                                  140                   99.5               12
+   heart_rate thirty_day_mort
+        &lt;dbl&gt;           &lt;int&gt;
+ 1         78               0
+ 2         91               0
+ 3         67               0
+ 4         74               0
+ 5         95               0
+ 6         96               0
+ 7         89               0
+ 8         71               0
+ 9         67               0
+10         72               0
 # … with more rows</code></pre>
 </div>
 </div>

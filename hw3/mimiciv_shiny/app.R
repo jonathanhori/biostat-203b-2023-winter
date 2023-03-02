@@ -53,7 +53,7 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel("Bar chart by group", 
                            plotOutput("cohort_plot")),
-                  tabPanel("Count by group over time", 
+                  tabPanel("Admission count by group over time", 
                            plotOutput("line_plot")),
                   tabPanel("Mortality rate by group", 
                            tableOutput("cohort_summary"))
@@ -109,9 +109,6 @@ ui <- fluidPage(
   )
   
 )
-
-
-
 
 
 # Server logic
@@ -212,9 +209,7 @@ server <- function(input, output) {
                 max = max(get(input$vital_lab_name)),
                 )
   })
-  
-  
-  # output$test <- renderTable({count_data_input() %>%  head})
+
   
   
   #####################
