@@ -1,0 +1,230 @@
+---
+title: "Biostat 203B Homework 4"
+subtitle: Due Mar 24 @ 11:59PM
+author: YOUR NAME and UID
+format:
+  html:
+    theme: cosmo
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    code-fold: false
+knitr:
+  opts_chunk: 
+    cache: false    
+    echo: true
+    fig.align: 'center'
+    fig.width: 6
+    fig.height: 4
+    message: FALSE
+---
+
+Display machine information:
+```{r}
+#| eval: true
+
+sessionInfo()
+```
+Load database libraries and the tidyverse frontend:
+```{r}
+#| eval: true
+
+library(GGally)
+library(gtsummary)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(tidymodels))
+suppressPackageStartupMessages(library(lubridate))
+```
+
+# Predicting 30-day mortality
+
+Using the ICU cohort `icu_cohort.rds` you built in Homework 3, develop at least three analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression with elastic net (lasso + ridge) penalty (e.g., glmnet or keras package), (2) random forest, (3) boosting, and (4) support vector machines, or (5) MLP neural network (keras package)
+
+1. Partition data into 50% training set and 50% test set. Stratify partitioning according the 30-day mortality status.
+
+2. Train and tune the models using the training set.
+
+3. Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each model.
+
+# Solution
+## Load and setup data
+```{r}
+icu_data_path <- "../hw3/mimiciv_shiny/data/icu_cohort.rds"
+cohort_data <- read_rds(icu_data_path)
+
+cohort_data %>% print(width = Inf)
+```
+
+Drop all id columns and variables related to discharge.
+
+```{r}
+cohort_cleaned <- cohort_data %>% 
+  select(-subject_id,
+  -hadm_id,
+  -stay_id,
+  -intime,
+  -last_careunit,
+  -outtime,
+  -los,
+  -dischtime,
+  -deathtime,
+  -discharge_location,
+  -edregtime,
+  -edouttime,
+  -hospital_expire_flag,
+  -anchor_age,
+  -anchor_year,
+  -anchor_year_group,
+  -dod) %>% 
+  mutate(
+    admit_hour = hour(admittime),
+    thirty_day_mort = as.factor(thirty_day_mort)
+  ) %>% 
+  select(
+    -admittime
+  ) %>% 
+  print(width = Inf)
+
+```
+
+We choose to coalesce all categorical variables having levels with fewer than 
+3% of that variable's total number of patients into "other" categories for these 
+variables.
+```{r}
+lump_prop = 0.03
+
+cohort_cleaned <- cohort_cleaned %>% 
+  mutate(
+    first_careunit = fct_lump_prop(first_careunit, lump_prop),
+    admission_type = fct_lump_prop(admission_type, lump_prop),
+    admission_location = fct_lump_prop(admission_location, lump_prop),
+    ethnicity = fct_lump_prop(ethnicity, 0.028) # I want to keep Asian separate
+  )
+
+cohort_cleaned %>% tbl_summary(thirty_day_mort)
+```
+
+### Train/test split
+
+```{r}
+set.seed(100)
+data_split <- initial_split(
+  cohort_cleaned,
+  strata = thirty_day_mort,
+  prop = 0.5
+) 
+data_split
+
+cohort_train <- training(data_split)
+dim(cohort_train)
+
+cohort_test <- testing(data_split)
+dim(cohort_test)
+```
+
+
+## Data processing recipe
+
+We think lab and vital measurements will be important for preidcting mortality,
+and choose to impute missing values here using medians.
+
+```{r}
+recipe_with_normalization_and_dummies <- recipe(
+  thirty_day_mort ~ .,
+  data = cohort_train
+  ) %>% 
+  step_impute_median(all_numeric_predictors(), -age) %>% 
+  step_unknown(all_nominal_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_zv(all_numeric_predictors()) %>%
+  # step_naomit(everything()) %>%
+  prep(training = cohort_train, retain = TRUE)
+
+recipe_with_normalization_and_dummies
+```
+Our transformed data looks like this: 
+```{r}
+baked_data <- bake(recipe_with_normalization_and_dummies, new_data = NULL)
+
+baked_data %>% head()
+
+# baked_data[which(is.na(baked_data)),]
+```
+
+
+## Logistic Regression
+
+### Model and workflow
+```{r}
+logistic_model <- 
+  logistic_reg(
+    penalty = tune(),
+    mixture = tune()
+  ) %>% 
+  set_engine("glmnet", standardize = FALSE)
+logistic_model
+```
+
+```{r}
+logistic_workflow <- workflow() %>% 
+  add_recipe(recipe_with_normalization_and_dummies) %>% 
+  add_model(logistic_model)
+
+logistic_workflow
+```
+
+### Parameter grid
+
+```{r}
+logistic_grid <- grid_regular(
+  penalty(),
+  mixture(),
+  levels = c(100, 5)
+)
+logistic_grid
+```
+
+
+```{r}
+cv_split <- vfold_cv(cohort_train, v = 5)
+```
+
+### Fit model
+```{r}
+system.time(
+  logistic.fit <- logistic_workflow %>% 
+    tune_grid(
+      resamples = cv_split,
+      grid = logistic_grid,
+      metrics = metric_set(roc_auc, accuracy)
+    )
+)
+
+
+logistic.fit %>% 
+  show_best("roc_auc")
+
+```
+Evaluate CV:
+```{r}
+logistic.fit %>% 
+  collect_metrics() %>% 
+  print(width = Inf) %>% 
+  filter(.metric == "roc_auc") %>% 
+  ggplot(aes(x = penalty, y = mean, color = mixture)) +
+  geom_point() +
+  labs(
+    x = "Penalty",
+    y = "Cross-validation AUC"
+  ) %>% 
+  scale_x_log10
+```
+
+### Finalize best model
+```{r}
+
+```
+
