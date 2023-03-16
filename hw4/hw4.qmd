@@ -125,7 +125,7 @@ dim(cohort_test)
 ```
 
 
-## Data processing recipe
+## Data processing recipes
 
 We think lab and vital measurements will be important for preidcting mortality,
 and choose to impute missing values here using medians.
@@ -155,9 +155,9 @@ baked_data %>% head()
 ```
 
 
-## Logistic Regression
+## Create prediction models with custom parameter grids
 
-### Model and workflow
+### Logistic Regression
 ```{r}
 logistic_model <- 
   logistic_reg(
@@ -169,16 +169,6 @@ logistic_model
 ```
 
 ```{r}
-logistic_workflow <- workflow() %>% 
-  add_recipe(recipe_with_normalization_and_dummies) %>% 
-  add_model(logistic_model)
-
-logistic_workflow
-```
-
-### Parameter grid
-
-```{r}
 logistic_grid <- grid_regular(
   penalty(),
   mixture(),
@@ -187,27 +177,103 @@ logistic_grid <- grid_regular(
 logistic_grid
 ```
 
+### Random forest
+```{r}
+rf_model <- 
+  rand_forest(
+    mode = "classification",
+    mtry = tune(),
+    trees = tune()
+  ) %>% 
+  set_engine("ranger")
+rf_model
+```
 
+```{r}
+rf_grid <- grid_regular(
+  trees(range = c(100, 300)),
+  mtry(range = c(1, 5)),
+  levels = c(3, 5)
+)
+rf_grid
+```
+
+## Create workflowset with custom grids
+```{r}
+mimic_models <- 
+  workflow_set(
+    preproc = list(simple = recipe_with_normalization_and_dummies),
+    models = list(logit = logistic_model,
+                  rf = rf_model),
+    cross = TRUE
+  ) %>% 
+  
+  # Add a unique parameter grid for each model type. Not all parameters are
+  #   applicable for every model
+  option_add(grid = logistic_grid, id = "simple_logit") %>% 
+  option_add(grid = rf_grid, id = "simple_rf")
+mimic_models
+```
+
+
+
+## Run cross-validation for all models in workflowset
+
+Cross-validation splits
 ```{r}
 cv_split <- vfold_cv(cohort_train, v = 5)
 ```
 
-### Fit model
 ```{r}
-system.time(
-  logistic.fit <- logistic_workflow %>% 
-    tune_grid(
-      resamples = cv_split,
-      grid = logistic_grid,
-      metrics = metric_set(roc_auc, accuracy)
-    )
-)
+st_time <- proc.time()
 
+workflow_cv_fit <- mimic_models %>% 
+  workflow_map(
+    resamples = cv_split,
+    # grid = logistic_grid, 
+    metrics = metric_set(roc_auc, accuracy),
+    verbose = TRUE
+  )
 
-logistic.fit %>% 
-  show_best("roc_auc")
+end_time <- proc.time()
+print(end_time - st_time)
 
+workflow_cv_fit
 ```
+
+```{r}
+
+workflow_cv_fit %>% 
+  extract_workflow_set_result(id = "simple_logit") %>% 
+  collect_metrics %>% 
+  filter(.metric == "roc_auc") %>% 
+  ggplot(aes(x = penalty, y = mean, color = mixture)) +
+  geom_point() +
+  labs(
+    x = "Penalty",
+    y = "Cross-validation AUC"
+  ) %>% 
+  scale_x_log10
+
+
+  extract_parameter_set_dials(id = "simple_logit")
+
+
+  collect_metrics(summarize = FALSE)
+  
+```
+
+
+#### Evaluate CV results
+
+```{r}
+autoplot(workflow_cv_fit, metric = "roc_auc")
+
+
+rank_results(workflow_cv_fit, rank_metric = "roc_auc", select_best = TRUE)
+```
+
+
 Evaluate CV:
 ```{r}
 logistic.fit %>% 
@@ -224,7 +290,36 @@ logistic.fit %>%
 ```
 
 ### Finalize best model
+
+What is the best workflow for each model type?
 ```{r}
+best_workflows <- rank_results(workflow_cv_fit, 
+                               rank_metric = "roc_auc") %>% 
+  filter(.metric == "roc_auc") %>% 
+  group_by(model) %>% 
+  arrange(desc(mean)) %>% 
+  slice(1) %>% 
+  print(width = Inf)
+```
+
+Let's finalize our models for each of these workflows. Note selecting the 
+best workflow given a workflowset is an [open issue for tidymodels](https://github.com/tidymodels/workflowsets/issues/94).
+
+Best random forest:
+```{r}
+# Best model parameters
+best_rf.config <- workflow_cv_fit %>% 
+  extract_workflow_set_result("simple_rf") %>% 
+  select_best("roc_auc")
+
+# Finalized model
+best_rf <- workflow_cv_fit %>% 
+  extract_workflow("simple_rf") %>% 
+  finalize_workflow(best_rf.config) %>% 
+  last_fit(data_split)
+
+
+best_rf %>% collect_metrics()
 
 ```
 
