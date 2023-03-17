@@ -33,6 +33,7 @@ Load database libraries and the tidyverse frontend:
 
 library(GGally)
 library(gtsummary)
+library(keras)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(lubridate))
@@ -159,8 +160,7 @@ baked_data %>% head()
 
 ### Logistic Regression
 ```{r}
-logistic_model <- 
-  logistic_reg(
+logistic_model <- logistic_reg(
     penalty = tune(),
     mixture = tune()
   ) %>% 
@@ -174,13 +174,12 @@ logistic_grid <- grid_regular(
   mixture(),
   levels = c(100, 5)
 )
-logistic_grid
+logistic_grid %>% head
 ```
 
 ### Random forest
 ```{r}
-rf_model <- 
-  rand_forest(
+rf_model <- rand_forest(
     mode = "classification",
     mtry = tune(),
     trees = tune()
@@ -195,8 +194,32 @@ rf_grid <- grid_regular(
   mtry(range = c(1, 5)),
   levels = c(3, 5)
 )
-rf_grid
+rf_grid %>% head
 ```
+
+
+### Multilayer perceptron, 1 hidden layer
+
+```{r}
+mlp_model <- mlp(
+  mode = "classification",
+  hidden_units = tune(),
+  dropout = tune(),
+  epochs = 20
+) %>% 
+  set_engine("keras", verbose = 0)
+mlp_model
+```
+
+```{r}
+mlp_grid <- grid_regular(
+  hidden_units(range = c(1, 20)),
+  dropout(range = c(0, 0.6)),
+  levels = 5
+)
+mlp_grid %>% head
+```
+
 
 ## Create workflowset with custom grids
 ```{r}
@@ -204,14 +227,16 @@ mimic_models <-
   workflow_set(
     preproc = list(simple = recipe_with_normalization_and_dummies),
     models = list(logit = logistic_model,
-                  rf = rf_model),
+                  # rf = rf_model,
+                  mlp = mlp_model),
     cross = TRUE
   ) %>% 
   
   # Add a unique parameter grid for each model type. Not all parameters are
   #   applicable for every model
   option_add(grid = logistic_grid, id = "simple_logit") %>% 
-  option_add(grid = rf_grid, id = "simple_rf")
+  # option_add(grid = rf_grid, id = "simple_rf") %>% 
+  option_add(grid = mlp_grid, id = "simple_mlp")
 mimic_models
 ```
 
@@ -230,7 +255,6 @@ st_time <- proc.time()
 workflow_cv_fit <- mimic_models %>% 
   workflow_map(
     resamples = cv_split,
-    # grid = logistic_grid, 
     metrics = metric_set(roc_auc, accuracy),
     verbose = TRUE
   )
@@ -241,8 +265,19 @@ print(end_time - st_time)
 workflow_cv_fit
 ```
 
-```{r}
+#### Evaluate CV results
 
+```{r}
+autoplot(workflow_cv_fit, metric = "roc_auc")
+```
+```{r}
+rank_results(workflow_cv_fit, rank_metric = "roc_auc", select_best = TRUE)
+```
+
+
+#### Hyperparameter performance per model
+```{r}
+# Logistic - penalty vs. mixture
 workflow_cv_fit %>% 
   extract_workflow_set_result(id = "simple_logit") %>% 
   collect_metrics %>% 
@@ -251,45 +286,30 @@ workflow_cv_fit %>%
   geom_point() +
   labs(
     x = "Penalty",
-    y = "Cross-validation AUC"
+    y = "Cross-validation AUC",
+    title = "Logistic regression hyperparameter tuning results"
   ) %>% 
   scale_x_log10
-
-
-  extract_parameter_set_dials(id = "simple_logit")
-
-
-  collect_metrics(summarize = FALSE)
   
-```
-
-
-#### Evaluate CV results
-
-```{r}
-autoplot(workflow_cv_fit, metric = "roc_auc")
-
-
-rank_results(workflow_cv_fit, rank_metric = "roc_auc", select_best = TRUE)
-```
-
-
-Evaluate CV:
-```{r}
-logistic.fit %>% 
-  collect_metrics() %>% 
-  print(width = Inf) %>% 
+# Logistic - trees vs. mtry
+workflow_cv_fit %>% 
+  extract_workflow_set_result(id = "simple_rf") %>% 
+  collect_metrics %>% 
   filter(.metric == "roc_auc") %>% 
-  ggplot(aes(x = penalty, y = mean, color = mixture)) +
+  ggplot(aes(x = trees, y = mean, color = mtry)) +
   geom_point() +
   labs(
     x = "Penalty",
-    y = "Cross-validation AUC"
+    y = "Cross-validation AUC",
+    title = "Random forest hyperparameter tuning results"
   ) %>% 
   scale_x_log10
+
+
 ```
 
-### Finalize best model
+
+## Finalize best model
 
 What is the best workflow for each model type?
 ```{r}
@@ -305,18 +325,61 @@ best_workflows <- rank_results(workflow_cv_fit,
 Let's finalize our models for each of these workflows. Note selecting the 
 best workflow given a workflowset is an [open issue for tidymodels](https://github.com/tidymodels/workflowsets/issues/94).
 
+```{r}
+finalize_model_from_set <- function(fit_workflowset, 
+                                    workfow_id,
+                                    cross_val_split) {
+  best.config <- fit_workflowset %>% 
+    extract_workflow_set_result(workflow_id) %>% 
+    select_best("roc_auc")
+  
+  best <- fit_workflowset %>% 
+    extract_workflow(workflow_id) %>% 
+    finalize_workflow(best.config) %>% 
+    last_fit(cross_val_split)
+  
+  return(best)
+}
+```
+
+
+Best logistic regression:
+```{r}
+best_logit <- finalize_model_from_set(workflow_cv_fit,
+                                      "simple_logit",
+                                      data_split)
+
+# # Best model parameters
+# best_logit.config <- workflow_cv_fit %>% 
+#   extract_workflow_set_result("simple_logit") %>% 
+#   select_best("roc_auc")
+# 
+# # Finalized model
+# best_logit <- workflow_cv_fit %>% 
+#   extract_workflow()
+
+best_logit %>% collect_metrics()
+```
+
+
 Best random forest:
 ```{r}
-# Best model parameters
-best_rf.config <- workflow_cv_fit %>% 
-  extract_workflow_set_result("simple_rf") %>% 
-  select_best("roc_auc")
 
-# Finalized model
-best_rf <- workflow_cv_fit %>% 
-  extract_workflow("simple_rf") %>% 
-  finalize_workflow(best_rf.config) %>% 
-  last_fit(data_split)
+best_rf <- finalize_model_from_set(workflow_cv_fit,
+                                   "simple_rf",
+                                   data_split)
+
+
+# # Best model parameters
+# best_rf.config <- workflow_cv_fit %>% 
+#   extract_workflow_set_result("simple_rf") %>% 
+#   select_best("roc_auc")
+# 
+# # Finalized model
+# best_rf <- workflow_cv_fit %>% 
+#   extract_workflow("simple_rf") %>% 
+#   finalize_workflow(best_rf.config) %>% 
+#   last_fit(data_split)
 
 
 best_rf %>% collect_metrics()
