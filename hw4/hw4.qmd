@@ -55,7 +55,7 @@ Using the ICU cohort `icu_cohort.rds` you built in Homework 3, develop at least 
 # Solution
 ## Load and setup data
 ```{r}
-icu_data_path <- "../hw3/mimiciv_shiny/data/icu_cohort.rds"
+icu_data_path <- "./icu_cohort.rds"
 cohort_data <- read_rds(icu_data_path)
 
 cohort_data %>% print(width = Inf)
@@ -330,6 +330,9 @@ workflow_cv_fit
 ```{r}
 autoplot(workflow_cv_fit, metric = "roc_auc")
 ```
+
+We observe some AUCs are below 0.5. 
+
 ```{r}
 rank_results(workflow_cv_fit, rank_metric = "roc_auc", select_best = TRUE)
 ```
@@ -351,19 +354,19 @@ workflow_cv_fit %>%
   ) %>% 
   scale_x_log10
   
-# # Logistic - trees vs. mtry
-# workflow_cv_fit %>% 
-#   extract_workflow_set_result(id = "simple_rf") %>% 
-#   collect_metrics %>% 
-#   filter(.metric == "roc_auc") %>% 
-#   ggplot(aes(x = trees, y = mean, color = mtry)) +
-#   geom_point() +
-#   labs(
-#     x = "Penalty",
-#     y = "Cross-validation AUC",
-#     title = "Random forest hyperparameter tuning results"
-#   ) %>% 
-#   scale_x_log10
+# Logistic - trees vs. mtry
+workflow_cv_fit %>%
+  extract_workflow_set_result(id = "simple_rf") %>%
+  collect_metrics %>%
+  filter(.metric == "roc_auc") %>%
+  ggplot(aes(x = trees, y = mean, color = mtry)) +
+  geom_point() +
+  labs(
+    x = "Number of trees",
+    y = "Cross-validation AUC",
+    title = "Random forest hyperparameter tuning results"
+  ) %>%
+  scale_x_log10
 
 
 # Boosted trees - learning rate vs. tree depth
