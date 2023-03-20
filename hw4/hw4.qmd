@@ -30,10 +30,13 @@ sessionInfo()
 Load database libraries and the tidyverse frontend:
 ```{r}
 #| eval: true
-
+# install.packages("bonsai")
 library(GGally)
 library(gtsummary)
-library(keras)
+# library(keras)
+# install_keras()
+library(bonsai)
+library(lightgbm)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(lubridate))
@@ -141,10 +144,12 @@ recipe_with_normalization_and_dummies <- recipe(
   step_normalize(all_numeric_predictors()) %>%
   step_dummy(all_nominal_predictors()) %>%
   step_zv(all_numeric_predictors()) %>%
-  # step_naomit(everything()) %>%
   prep(training = cohort_train, retain = TRUE)
 
-recipe_with_normalization_and_dummies
+
+
+# recipe_with_
+
 ```
 Our transformed data looks like this: 
 ```{r}
@@ -198,9 +203,57 @@ rf_grid %>% head
 ```
 
 
-### Multilayer perceptron, 1 hidden layer
+### Boosted decision trees
+
+Using `lightgbm` for speed in training rather than `xgboost`.
 
 ```{r}
+boosted_model <- boost_tree(
+  mode = "classification",
+  trees = 1000,
+  tree_depth = tune(),
+  learn_rate = tune()
+) %>% 
+  set_engine("lightgbm")
+boosted_model
+```
+```{r}
+boosted_grid <- grid_regular(
+  tree_depth(range = c(1L, 3L)),
+  learn_rate(range = c(-5, 2), trans = log10_trans()),
+  levels = c(3, 10)
+)
+boosted_grid %>% head
+```
+
+
+<!-- ### K-nearest neighbors -->
+<!-- ```{r} -->
+<!-- knn_model <- nearest_neighbor( -->
+<!--   mode = "classication", -->
+<!--   neighbors = tune() -->
+<!-- ) %>%  -->
+<!--   set_engine("kknn") -->
+
+<!-- knn_model -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- knn_grid <- grid_regular( -->
+<!--   neighbors(range = c(2, 15)), -->
+<!--   levels = c(10) -->
+<!-- ) -->
+<!-- knn_grid -->
+<!-- ``` -->
+
+
+### Multilayer perceptron, 1 hidden layer
+
+Note: Had bugs with keras on my M1 mac that I couldn't debug (possibly related
+to `tensorflow-deps`?). Retaining model here as an example, but it is not used 
+in the final workflowset.
+
+```{r, eval = FALSE}
 mlp_model <- mlp(
   mode = "classification",
   hidden_units = tune(),
@@ -211,7 +264,7 @@ mlp_model <- mlp(
 mlp_model
 ```
 
-```{r}
+```{r, eval = FALSE}
 mlp_grid <- grid_regular(
   hidden_units(range = c(1, 20)),
   dropout(range = c(0, 0.6)),
@@ -222,21 +275,28 @@ mlp_grid %>% head
 
 
 ## Create workflowset with custom grids
+
+We add a custom grid for each model, which in a workflowset will correspond to 
+unique `workflow_id`s. So we have to specify a grid for each recipe-model pair.
+
 ```{r}
 mimic_models <- 
   workflow_set(
     preproc = list(simple = recipe_with_normalization_and_dummies),
     models = list(logit = logistic_model,
-                  # rf = rf_model,
-                  mlp = mlp_model),
+                  rf = rf_model,
+                  # mlp = mlp_model,
+                  boosted = boosted_model
+                  ),
     cross = TRUE
   ) %>% 
   
   # Add a unique parameter grid for each model type. Not all parameters are
   #   applicable for every model
   option_add(grid = logistic_grid, id = "simple_logit") %>% 
-  # option_add(grid = rf_grid, id = "simple_rf") %>% 
-  option_add(grid = mlp_grid, id = "simple_mlp")
+  option_add(grid = rf_grid, id = "simple_rf") %>%
+  # option_add(grid = mlp_grid, id = "simple_mlp") %>% 
+  option_add(grid = boosted_grid, id = "simple_boosted")
 mimic_models
 ```
 
@@ -291,21 +351,34 @@ workflow_cv_fit %>%
   ) %>% 
   scale_x_log10
   
-# Logistic - trees vs. mtry
+# # Logistic - trees vs. mtry
+# workflow_cv_fit %>% 
+#   extract_workflow_set_result(id = "simple_rf") %>% 
+#   collect_metrics %>% 
+#   filter(.metric == "roc_auc") %>% 
+#   ggplot(aes(x = trees, y = mean, color = mtry)) +
+#   geom_point() +
+#   labs(
+#     x = "Penalty",
+#     y = "Cross-validation AUC",
+#     title = "Random forest hyperparameter tuning results"
+#   ) %>% 
+#   scale_x_log10
+
+
+# Boosted trees - learning rate vs. tree depth
 workflow_cv_fit %>% 
-  extract_workflow_set_result(id = "simple_rf") %>% 
+  extract_workflow_set_result(id = "simple_boosted") %>% 
   collect_metrics %>% 
-  filter(.metric == "roc_auc") %>% 
-  ggplot(aes(x = trees, y = mean, color = mtry)) +
+  filter(.metric == "roc_auc")%>% 
+  ggplot(aes(x = learn_rate, y = mean, color = tree_depth)) +
   geom_point() +
   labs(
-    x = "Penalty",
+    x = "Learning Rate",
     y = "Cross-validation AUC",
-    title = "Random forest hyperparameter tuning results"
+    title = "LightGBM hyperparameter tuning results"
   ) %>% 
   scale_x_log10
-
-
 ```
 
 
@@ -318,7 +391,7 @@ best_workflows <- rank_results(workflow_cv_fit,
   filter(.metric == "roc_auc") %>% 
   group_by(model) %>% 
   arrange(desc(mean)) %>% 
-  slice(1) %>% 
+  slice_head(n = 1) %>% 
   print(width = Inf)
 ```
 
@@ -327,7 +400,7 @@ best workflow given a workflowset is an [open issue for tidymodels](https://gith
 
 ```{r}
 finalize_model_from_set <- function(fit_workflowset, 
-                                    workfow_id,
+                                    workflow_id,
                                     cross_val_split) {
   best.config <- fit_workflowset %>% 
     extract_workflow_set_result(workflow_id) %>% 
@@ -348,16 +421,6 @@ Best logistic regression:
 best_logit <- finalize_model_from_set(workflow_cv_fit,
                                       "simple_logit",
                                       data_split)
-
-# # Best model parameters
-# best_logit.config <- workflow_cv_fit %>% 
-#   extract_workflow_set_result("simple_logit") %>% 
-#   select_best("roc_auc")
-# 
-# # Finalized model
-# best_logit <- workflow_cv_fit %>% 
-#   extract_workflow()
-
 best_logit %>% collect_metrics()
 ```
 
@@ -368,21 +431,18 @@ Best random forest:
 best_rf <- finalize_model_from_set(workflow_cv_fit,
                                    "simple_rf",
                                    data_split)
-
-
-# # Best model parameters
-# best_rf.config <- workflow_cv_fit %>% 
-#   extract_workflow_set_result("simple_rf") %>% 
-#   select_best("roc_auc")
-# 
-# # Finalized model
-# best_rf <- workflow_cv_fit %>% 
-#   extract_workflow("simple_rf") %>% 
-#   finalize_workflow(best_rf.config) %>% 
-#   last_fit(data_split)
-
-
 best_rf %>% collect_metrics()
+
+```
+
+
+Best lightgbm model:
+```{r}
+
+best_lightgbm <- finalize_model_from_set(workflow_cv_fit,
+                                         "simple_boosted",
+                                         data_split)
+best_lightgbm %>% collect_metrics()
 
 ```
 
