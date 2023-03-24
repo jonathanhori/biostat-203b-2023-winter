@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 4"
 subtitle: Due Mar 24 @ 11:59PM
-author: YOUR NAME and UID
+author: Jonathan Hori - 305947261
 format:
   html:
     theme: cosmo
@@ -31,8 +31,8 @@ Load database libraries and the tidyverse frontend:
 ```{r}
 #| eval: true
 # install.packages("bonsai")
-library(GGally)
-library(gtsummary)
+suppressPackageStartupMessages(library(GGally))
+suppressPackageStartupMessages(library(gtsummary))
 # library(keras)
 # install_keras()
 library(bonsai)
@@ -66,22 +66,22 @@ Drop all id columns and variables related to discharge.
 ```{r}
 cohort_cleaned <- cohort_data %>% 
   select(-subject_id,
-  -hadm_id,
-  -stay_id,
-  -intime,
-  -last_careunit,
-  -outtime,
-  -los,
-  -dischtime,
-  -deathtime,
-  -discharge_location,
-  -edregtime,
-  -edouttime,
-  -hospital_expire_flag,
-  -anchor_age,
-  -anchor_year,
-  -anchor_year_group,
-  -dod) %>% 
+         -hadm_id,
+         -stay_id,
+         -intime,
+         -last_careunit,
+         -outtime,
+         -los,
+         -dischtime,
+         -deathtime,
+         -discharge_location,
+         -edregtime,
+         -edouttime,
+         -hospital_expire_flag,
+         -anchor_age,
+         -anchor_year,
+         -anchor_year_group,
+         -dod) %>% 
   mutate(
     admit_hour = hour(admittime),
     thirty_day_mort = as.factor(thirty_day_mort)
@@ -104,7 +104,9 @@ cohort_cleaned <- cohort_cleaned %>%
     first_careunit = fct_lump_prop(first_careunit, lump_prop),
     admission_type = fct_lump_prop(admission_type, lump_prop),
     admission_location = fct_lump_prop(admission_location, lump_prop),
-    ethnicity = fct_lump_prop(ethnicity, 0.028) # I want to keep Asian separate
+    ethnicity = fct_lump_prop(ethnicity, 0.028) 
+    # I want to keep Asian separate since it's borderline and I'm curious. 
+    #   I know this line is less reproducible. 
   )
 
 cohort_cleaned %>% tbl_summary(thirty_day_mort)
@@ -131,12 +133,10 @@ dim(cohort_test)
 
 ## Data processing recipes
 
-We think lab and vital measurements will be important for predicting mortality,
-and choose to impute missing values here using medians. We experiment with
-alternate methods to handle outlier values.
-
-I'm not sure if there's a better way to reuse a set of multiple steps in more
-than one recipe, so this code isn't very DRY.
+I think lab and vital measurements will be important for predicting mortality,
+and choose to impute missing values here using medians. I experiment with
+alternate methods to handle outlier values. I consider as an outlier any value 
+below the 5th percentile, or above the 95th percentile.
 
 ```{r}
 remove_outliers <- function(col) {
@@ -165,6 +165,9 @@ base_with_outlier_truncation <- base_recipe %>%
 ```
 
 
+I'm not sure if there's a better way to reuse a set of multiple steps in more
+than one recipe, so this section isn't very DRY. However, these steps shoudld 
+come after outlier adjustment.
 ```{r}
 recipe_with_filter_normalization_and_dummies <- 
   base_with_outlier_filter %>% 
@@ -195,10 +198,9 @@ recipe_with_normalization_and_dummies <- base_recipe %>%
 
 ```
 
-Our transformed data looks like this (without outlier transformation): 
+Our transformed data (without outlier transformation) looks like this: 
 ```{r}
 baked_data <- bake(recipe_with_normalization_and_dummies, new_data = NULL)
-# baked_data <- bake(recipe_with_filter_normalization_and_dummies, new_data = NULL)
 
 baked_data %>% head() %>% print(width = Inf)
 ```
@@ -270,33 +272,13 @@ boosted_grid %>% head
 ```
 
 
-<!-- ### K-nearest neighbors -->
-<!-- ```{r} -->
-<!-- knn_model <- nearest_neighbor( -->
-<!--   mode = "classication", -->
-<!--   neighbors = tune() -->
-<!-- ) %>%  -->
-<!--   set_engine("kknn") -->
-
-<!-- knn_model -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- knn_grid <- grid_regular( -->
-<!--   neighbors(range = c(2, 15)), -->
-<!--   levels = c(10) -->
-<!-- ) -->
-<!-- knn_grid -->
-<!-- ``` -->
-
-
 ### Multilayer perceptron, 1 hidden layer
 
 Note: Had bugs with keras on my M1 mac that I couldn't debug (possibly related
 to `tensorflow-deps`?). Retaining model here as an example, but it is not used 
 in the final workflowset.
 
-```{r, eval = FALSE}
+```{r}
 mlp_model <- mlp(
   mode = "classification",
   hidden_units = tune(),
@@ -307,7 +289,7 @@ mlp_model <- mlp(
 mlp_model
 ```
 
-```{r, eval = FALSE}
+```{r}
 mlp_grid <- grid_regular(
   hidden_units(range = c(1, 20)),
   dropout(range = c(0, 0.6)),
@@ -319,32 +301,40 @@ mlp_grid %>% head
 
 ## Create workflowset with custom grids
 
-We add a custom grid for each model, which in a workflowset will correspond to 
-unique `workflow_id`s. So we have to specify a grid for each recipe-model pair.
+We add a custom parameter grid for each model, which in a workflowset will 
+correspond to unique `workflow_id`s. So we have to specify a grid for each 
+recipe-model pair. 
+
+This manual process of adding a custom grid for each pair leads me to think 
+using workflowsets makes the most sense when comparing models
+in the same family and having the same types of parameters.
 
 ```{r}
 mimic_models <- 
   workflow_set(
-    preproc = list(simple = recipe_with_normalization_and_dummies,
-                 filtering = recipe_with_filter_normalization_and_dummies,
-                 truncating = recipe_with_truncation_normalization_and_dummies),
-    models = list(logit = logistic_model,
-                  rf = rf_model,
-                  boosted = boosted_model
-                  ),
+    preproc = list(
+      simple = recipe_with_normalization_and_dummies,
+      filtering = recipe_with_filter_normalization_and_dummies,
+      truncating = recipe_with_truncation_normalization_and_dummies
+    ),
+    models = list(
+      logit = logistic_model,
+      rf = rf_model,
+      boosted = boosted_model
+    ),
     cross = TRUE
   ) %>% 
   
   # Add a unique parameter grid for each model type. Not all parameters are
-  #   applicable for every model
+  #   applicable for every model. 
   option_add(grid = logistic_grid, id = "simple_logit") %>% 
-  # option_add(grid = logistic_grid, id = "filtering_logit") %>% 
+  option_add(grid = logistic_grid, id = "filtering_logit") %>%
   option_add(grid = logistic_grid, id = "truncating_logit") %>% 
   option_add(grid = rf_grid, id = "simple_rf") %>%
-  # option_add(grid = rf_grid, id = "filtering_rf") %>%
+  option_add(grid = rf_grid, id = "filtering_rf") %>%
   option_add(grid = rf_grid, id = "truncating_rf") %>%
   option_add(grid = boosted_grid, id = "simple_boosted") %>% 
-  # option_add(grid = boosted_grid, id = "filtering_boosted") %>% 
+  option_add(grid = boosted_grid, id = "filtering_boosted") %>%
   option_add(grid = boosted_grid, id = "truncating_boosted")
 mimic_models
 ```
@@ -353,11 +343,12 @@ mimic_models
 
 ## Run cross-validation for all models in workflowset
 
-Cross-validation splits
+Cross-validation splits. Split into five folds. 
 ```{r}
 cv_split <- vfold_cv(cohort_train, v = 5)
 ```
 
+Run cross-validation.
 ```{r}
 st_time <- proc.time()
 
@@ -462,7 +453,7 @@ finalize_model_from_set <- function(fit_workflowset,
                                     cross_val_split) {
   best.config <- fit_workflowset %>% 
     extract_workflow_set_result(workflow_id) %>% 
-    select_best("roc_auc")
+    select_best("roc_auc") # only considering AUC for this task
   
   best <- fit_workflowset %>% 
     extract_workflow(workflow_id) %>% 
@@ -485,24 +476,23 @@ best_logit %>% collect_metrics()
 
 Best random forest:
 ```{r}
-
 best_rf <- finalize_model_from_set(workflow_cv_fit,
                                    "simple_rf",
                                    data_split)
 best_rf %>% collect_metrics()
-
 ```
 
 
 Best lightgbm model:
 ```{r}
-
 best_lightgbm <- finalize_model_from_set(workflow_cv_fit,
                                          "simple_boosted",
                                          data_split)
 best_lightgbm %>% collect_metrics()
-
 ```
 
-
-We see that 
+As in cross-validation, we see the lightgbm model has the highest AUC at 0.84, 
+with random forest behind at 0.84, and logistic regression performing the worst 
+with an AUC of 0.80. Accuracies for all models are roughly comparable, with 
+lightgbm still performing the best at 0.91, with the random forest and logistic
+regression models only slightly behind at 0.90 each.
