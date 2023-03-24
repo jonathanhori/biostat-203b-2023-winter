@@ -131,14 +131,60 @@ dim(cohort_test)
 
 ## Data processing recipes
 
-We think lab and vital measurements will be important for preidcting mortality,
-and choose to impute missing values here using medians.
+We think lab and vital measurements will be important for predicting mortality,
+and choose to impute missing values here using medians. We experiment with
+alternate methods to handle outlier values.
+
+I'm not sure if there's a better way to reuse a set of multiple steps in more
+than one recipe, so this code isn't very DRY.
 
 ```{r}
-recipe_with_normalization_and_dummies <- recipe(
+remove_outliers <- function(col) {
+  quantiles <- quantile(col, probs = c(0.5, 0.95), na.rm = TRUE)
+  col[col < quantiles[1] | col > quantiles[2]] <- NA
+  return(col)
+}
+
+truncate_outliers <- function(col) {
+  quantiles <- quantile(col, probs = c(0.5, 0.95), na.rm = TRUE)
+  col[col < quantiles[1]] <- quantiles[1]
+  col[col > quantiles[2]] <- quantiles[2]
+  return(col)
+}
+
+base_recipe <- recipe(
   thirty_day_mort ~ .,
   data = cohort_train
-  ) %>% 
+  )
+
+base_with_outlier_filter <- base_recipe %>% 
+  step_mutate_at(all_numeric_predictors(), -age, fn = remove_outliers)
+
+base_with_outlier_truncation <- base_recipe %>% 
+  step_mutate_at(all_numeric_predictors(), fn = truncate_outliers)
+```
+
+
+```{r}
+recipe_with_filter_normalization_and_dummies <- 
+  base_with_outlier_filter %>% 
+  step_impute_median(all_numeric_predictors(), -age) %>% 
+  step_unknown(all_nominal_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_zv(all_numeric_predictors()) %>%
+  prep(training = cohort_train, retain = TRUE)
+
+recipe_with_truncation_normalization_and_dummies <- 
+  base_with_outlier_truncation %>% 
+  step_impute_median(all_numeric_predictors(), -age) %>% 
+  step_unknown(all_nominal_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_zv(all_numeric_predictors()) %>%
+  prep(training = cohort_train, retain = TRUE)
+  
+recipe_with_normalization_and_dummies <- base_recipe %>% 
   step_impute_median(all_numeric_predictors(), -age) %>% 
   step_unknown(all_nominal_predictors()) %>% 
   step_normalize(all_numeric_predictors()) %>%
@@ -147,17 +193,14 @@ recipe_with_normalization_and_dummies <- recipe(
   prep(training = cohort_train, retain = TRUE)
 
 
-
-# recipe_with_
-
 ```
-Our transformed data looks like this: 
+
+Our transformed data looks like this (without outlier transformation): 
 ```{r}
 baked_data <- bake(recipe_with_normalization_and_dummies, new_data = NULL)
+# baked_data <- bake(recipe_with_filter_normalization_and_dummies, new_data = NULL)
 
-baked_data %>% head()
-
-# baked_data[which(is.na(baked_data)),]
+baked_data %>% head() %>% print(width = Inf)
 ```
 
 
@@ -282,10 +325,11 @@ unique `workflow_id`s. So we have to specify a grid for each recipe-model pair.
 ```{r}
 mimic_models <- 
   workflow_set(
-    preproc = list(simple = recipe_with_normalization_and_dummies),
+    preproc = list(simple = recipe_with_normalization_and_dummies,
+                 filtering = recipe_with_filter_normalization_and_dummies,
+                 truncating = recipe_with_truncation_normalization_and_dummies),
     models = list(logit = logistic_model,
                   rf = rf_model,
-                  # mlp = mlp_model,
                   boosted = boosted_model
                   ),
     cross = TRUE
@@ -294,9 +338,14 @@ mimic_models <-
   # Add a unique parameter grid for each model type. Not all parameters are
   #   applicable for every model
   option_add(grid = logistic_grid, id = "simple_logit") %>% 
+  # option_add(grid = logistic_grid, id = "filtering_logit") %>% 
+  option_add(grid = logistic_grid, id = "truncating_logit") %>% 
   option_add(grid = rf_grid, id = "simple_rf") %>%
-  # option_add(grid = mlp_grid, id = "simple_mlp") %>% 
-  option_add(grid = boosted_grid, id = "simple_boosted")
+  # option_add(grid = rf_grid, id = "filtering_rf") %>%
+  option_add(grid = rf_grid, id = "truncating_rf") %>%
+  option_add(grid = boosted_grid, id = "simple_boosted") %>% 
+  # option_add(grid = boosted_grid, id = "filtering_boosted") %>% 
+  option_add(grid = boosted_grid, id = "truncating_boosted")
 mimic_models
 ```
 
@@ -337,8 +386,14 @@ We observe some AUCs are below 0.5.
 rank_results(workflow_cv_fit, rank_metric = "roc_auc", select_best = TRUE)
 ```
 
+Lightgbm performs the best on an AUC basis, with the random forest model closely 
+behind. 
 
 #### Hyperparameter performance per model
+
+Plotting the results for the best version of each model. In this case it is the 
+"simple" data recipe, without any outlier adjustment.
+
 ```{r}
 # Logistic - penalty vs. mixture
 workflow_cv_fit %>% 
@@ -449,3 +504,5 @@ best_lightgbm %>% collect_metrics()
 
 ```
 
+
+We see that 
